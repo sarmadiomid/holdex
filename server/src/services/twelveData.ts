@@ -52,6 +52,8 @@ function connect() {
             [`allocations.${normalizedSymbol}`]: { $gt: 0 },
           })
 
+          logger.debug(`Price update for ${normalizedSymbol}: ${price}, users with allocations: ${users.length}`)
+
           for (const user of users) {
             await recalcAndBroadcastUser(user)
           }

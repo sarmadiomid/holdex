@@ -1,7 +1,8 @@
-// Amplifies real-world price changes into meaningful game movements
-// Without this, a 0.01% BTC move on 100 HLX = invisible change
-// With 50x, a 0.1% real move = 5% game move (meaningful for players)
-const VOLATILITY_MULTIPLIER = 500
+const VOLATILITY_MULTIPLIER: Record<string, number> = {
+  BTC: 900,
+  GOLD: 50,
+  OIL: 200,
+}
 
 interface Allocations {
   BTC: number
@@ -38,7 +39,8 @@ export function calculatePortfolioValue(
     }
 
     const priceChange = (currentPrice - initialPrice) / initialPrice
-    const amplifiedChange = priceChange * VOLATILITY_MULTIPLIER
+    const multiplier = VOLATILITY_MULTIPLIER[asset] || 1
+    const amplifiedChange = priceChange * multiplier
     const leveragedChange = amplifiedChange * leverage
     const assetValue = allocatedAmount * (1 + leveragedChange)
     totalValue += assetValue
