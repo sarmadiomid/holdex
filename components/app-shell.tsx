@@ -15,6 +15,11 @@ import { useSocket } from '@/hooks/use-socket'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
+if (typeof window !== 'undefined') {
+  console.log('[app] NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL)
+  console.log('[app] Resolved BACKEND_URL:', BACKEND_URL)
+}
+
 function useLandingCountdown(endsAt: number) {
   const calc = () => {
     const diff = Math.max(0, endsAt - Date.now())

@@ -10,6 +10,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   TWELVE_DATA_API_KEY: z.string().min(1),
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  ALLOWED_ORIGINS: z.string().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>

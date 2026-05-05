@@ -22,7 +22,38 @@ async function bootstrap() {
   const httpServer = http.createServer(app)
 
   app.use(helmet())
-  app.use(cors({ origin: env.FRONTEND_URL, credentials: true }))
+
+  // CORS: allow FRONTEND_URL, localhost, and any vercel.app subdomains
+  const allowedOrigins = [
+    env.FRONTEND_URL,
+    'http://localhost:3000',
+    /\.vercel\.app$/,
+  ]
+  // Also allow any origin from ALLOWED_ORIGINS env var (comma-separated)
+  if (env.ALLOWED_ORIGINS) {
+    allowedOrigins.push(...env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()))
+  }
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, etc)
+        if (!origin) return callback(null, true)
+        const isAllowed = allowedOrigins.some((allowed) => {
+          if (typeof allowed === 'string') return allowed === origin
+          if (allowed instanceof RegExp) return allowed.test(origin)
+          return false
+        })
+        if (isAllowed) {
+          callback(null, true)
+        } else {
+          logger.warn(`CORS blocked origin: ${origin}`)
+          callback(null, false)
+        }
+      },
+      credentials: true,
+    })
+  )
   app.use(express.json({ limit: '10kb' }))
   app.use(generalLimiter)
 
