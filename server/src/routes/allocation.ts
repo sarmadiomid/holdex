@@ -110,11 +110,8 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
     }
 
     const prices = getLatestPrices()
-    await recalcAndBroadcastUser(user)
-
-    const pnl = user.totalPnl
-    const newBalance = Math.round((user.balance + pnl) * 100) / 100
-
+    const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, OIL: 80 }
+    let totalValue = 0
     const soldPositions: { asset: string; allocation: number; pnl: number }[] = []
 
     for (const asset of ['BTC', 'GOLD', 'OIL'] as const) {
@@ -128,8 +125,12 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
         let assetPnl = 0
         if (initialPrice && currentPrice && initialPrice > 0) {
           const priceChange = (currentPrice - initialPrice) / initialPrice
-          const multiplier = asset === 'BTC' ? 100 : asset === 'GOLD' ? 50 : 80
-          assetPnl = allocatedAmount * priceChange * multiplier * user.leverage
+          const multiplier = multipliers[asset]
+          const leveragedChange = priceChange * multiplier * user.leverage
+          assetPnl = allocatedAmount * leveragedChange
+          totalValue += allocatedAmount * (1 + leveragedChange)
+        } else {
+          totalValue += allocatedAmount
         }
 
         soldPositions.push({ asset, allocation: alloc, pnl: assetPnl })
@@ -144,6 +145,12 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
         })
       }
     }
+
+    const unallocatedPercent = 100 - totalAllocated
+    totalValue += user.balance * (unallocatedPercent / 100)
+
+    const newBalance = Math.round(totalValue * 100) / 100
+    const pnl = Math.round((totalValue - user.balance) * 100) / 100
 
     user.allocations = { BTC: 0, GOLD: 0, OIL: 0 }
     user.initialPrices = { BTC: null, GOLD: null, OIL: null }
@@ -166,7 +173,7 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
     res.json({
       success: true,
       newBalance,
-      pnl: Math.round(pnl * 100) / 100,
+      pnl: Math.round((newBalance - user.balance) * 100) / 100,
       soldPositions,
     })
   } catch (error) {

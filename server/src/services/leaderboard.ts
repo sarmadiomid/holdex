@@ -76,13 +76,32 @@ export async function getLeaderboard(limit = 500) {
   const season = getCurrentSeason()
   const { start, end } = getWeekBoundaries()
 
-  const [entries, totalCount] = await Promise.all([
-    LeaderboardEntry.find({ season, weekStart: start })
-      .sort({ rank: 1 })
+  const [users, totalCount] = await Promise.all([
+    User.find({ weekStart: { $gte: start } })
+      .sort({ portfolioValue: -1 })
       .limit(limit)
       .lean(),
-    LeaderboardEntry.countDocuments({ season, weekStart: start }),
+    User.countDocuments({ weekStart: { $gte: start } }),
   ])
+
+  const entries = users.map((user, i) => {
+    const prize = DISTRIBUTION.find((d) => d.rank === i + 1)
+    return {
+      userId: user._id,
+      telegramId: user.telegramId,
+      username: user.username || `user${user.telegramId}`,
+      firstName: user.firstName,
+      photoUrl: user.photoUrl,
+      portfolioValue: user.portfolioValue,
+      pnl: user.totalPnl,
+      pnlPercent: user.totalPnlPercent,
+      rank: i + 1,
+      season,
+      weekStart: start,
+      weekEnd: end,
+      prizeTon: prize?.tonAmount,
+    }
+  })
 
   return {
     season,
