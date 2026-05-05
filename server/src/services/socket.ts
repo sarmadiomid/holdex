@@ -31,10 +31,13 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
   ioInstance = new Server(httpServer, {
     cors: {
-      origin: (origin) => {
-        if (!origin) return true
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true)
         const normalized = normalizeOrigin(origin)
-        return allowedOrigins.includes(normalized) || /\.vercel\.app$/.test(normalized)
+        if (allowedOrigins.includes(normalized) || /\.vercel\.app$/.test(normalized) || /\.telegram\.org$/.test(normalized)) {
+          return callback(null, true)
+        }
+        callback(new Error('Not allowed by CORS'), false)
       },
       credentials: true,
     },
@@ -107,14 +110,14 @@ export function broadcastAllPrices() {
 
 export async function recalcAndBroadcastUser(user: IUser) {
   const prices = latestPrices
-  if (!prices['BTC/USD'] || !prices['XAU/USD'] || !prices['WTI/USD']) {
+  if (!prices['BTC/USD'] || !prices['XAU/USD'] || !prices['USOIL']) {
     return user
   }
 
   const currentPrices: Record<string, number> = {
     BTC: prices['BTC/USD'].price,
     GOLD: prices['XAU/USD'].price,
-    OIL: prices['WTI/USD'].price,
+    OIL: prices['USOIL'].price,
   }
 
   const initialPrices: Record<string, number> = {}

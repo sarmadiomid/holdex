@@ -42,7 +42,7 @@ router.post(
 
       if (prices['BTC/USD']) initialPrices.BTC = prices['BTC/USD'].price
       if (prices['XAU/USD']) initialPrices.GOLD = prices['XAU/USD'].price
-      if (prices['WTI/USD']) initialPrices.OIL = prices['WTI/USD'].price
+      if (prices['USOIL']) initialPrices.OIL = prices['USOIL'].price
 
       user.allocations = allocations
       user.initialPrices = {

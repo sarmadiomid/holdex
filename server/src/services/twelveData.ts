@@ -4,7 +4,7 @@ import { logger } from '../utils/logger'
 import { broadcastPriceUpdate, recalcAndBroadcastUser } from './socket'
 import { User } from '../db/models/User'
 
-const SYMBOLS = ['BTC/USD', 'XAU/USD', 'WTI/USD']
+const SYMBOLS = ['BTC/USD', 'XAU/USD', 'USOIL']
 const RECONNECT_DELAY_MS = 5000
 const HEARTBEAT_INTERVAL_MS = 10000
 
@@ -92,7 +92,7 @@ function normalizeSymbol(symbol: string): string | null {
   const map: Record<string, string> = {
     'BTC/USD': 'BTC',
     'XAU/USD': 'GOLD',
-    'WTI/USD': 'OIL',
+    'USOIL': 'OIL',
   }
   return map[symbol] || null
 }
