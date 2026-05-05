@@ -55,7 +55,7 @@ export function Leaderboard() {
 
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/leaderboard?limit=50`, {
+        const res = await fetch(`${BACKEND_URL}/api/leaderboard?limit=500`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.ok) {

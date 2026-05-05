@@ -40,8 +40,8 @@ export async function calculateAndSaveLeaderboard(): Promise<void> {
   logger.info(`Calculating leaderboard for season ${season}`)
 
   const users = await User.find({ weekStart: { $gte: start } })
-    .sort({ totalPnlPercent: -1 })
-    .limit(100)
+    .sort({ portfolioValue: -1 })
+    .lean()
 
   const entries = []
 
@@ -72,18 +72,21 @@ export async function calculateAndSaveLeaderboard(): Promise<void> {
   logger.info(`Leaderboard saved: ${entries.length} entries for season ${season}`)
 }
 
-export async function getLeaderboard(limit = 50) {
+export async function getLeaderboard(limit = 500) {
   const season = getCurrentSeason()
   const { start, end } = getWeekBoundaries()
 
-  const entries = await LeaderboardEntry.find({ season, weekStart: start })
-    .sort({ rank: 1 })
-    .limit(limit)
-    .lean()
+  const [entries, totalCount] = await Promise.all([
+    LeaderboardEntry.find({ season, weekStart: start })
+      .sort({ rank: 1 })
+      .limit(limit)
+      .lean(),
+    LeaderboardEntry.countDocuments({ season, weekStart: start }),
+  ])
 
   return {
     season,
-    totalParticipants: entries.length,
+    totalParticipants: totalCount,
     prizePool: PRIZE_POOL_TON,
     distribution: DISTRIBUTION,
     weekStart: start,

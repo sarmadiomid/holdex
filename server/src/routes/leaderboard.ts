@@ -8,10 +8,10 @@ const router = Router()
 
 router.get('/leaderboard', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const limit = parseInt((req.query.limit as string) || '50', 10)
+    const limit = parseInt((req.query.limit as string) || '500', 10)
     const { telegramId } = req
 
-    const leaderboard = await getLeaderboard(Math.min(limit, 100))
+    const leaderboard = await getLeaderboard(limit)
 
     const user = await User.findOne({ telegramId }).select(
       'portfolioValue totalPnl totalPnlPercent',
@@ -20,7 +20,7 @@ router.get('/leaderboard', authMiddleware, async (req: AuthRequest, res) => {
     let userRank = null
     if (user) {
       const higherCount = await User.countDocuments({
-        totalPnlPercent: { $gt: user.totalPnlPercent },
+        portfolioValue: { $gt: user.portfolioValue },
         weekStart: user.weekStart,
       })
       userRank = higherCount + 1
