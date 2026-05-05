@@ -1,7 +1,7 @@
 // Amplifies real-world price changes into meaningful game movements
 // Without this, a 0.01% BTC move on 100 HLX = invisible change
 // With 50x, a 0.1% real move = 5% game move (meaningful for players)
-const VOLATILITY_MULTIPLIER = 50
+const VOLATILITY_MULTIPLIER = 500
 
 interface Allocations {
   BTC: number
