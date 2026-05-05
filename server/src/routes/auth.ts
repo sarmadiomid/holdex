@@ -90,6 +90,7 @@ router.post(
           photoUrl: user.photoUrl,
           balance: user.balance,
           allocations: user.allocations,
+          initialPrices: user.initialPrices,
           leverage: user.leverage,
           portfolioValue: user.portfolioValue,
           totalPnl: user.totalPnl,

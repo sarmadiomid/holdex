@@ -23,9 +23,19 @@ let latestPrices: Record<string, MarketPrice> = {}
 let ioInstance: Server | null = null
 
 export function setupSocketIO(httpServer: HTTPServer): Server {
+  const normalizeOrigin = (url: string) => url.replace(/\/+$/, '')
+  const allowedOrigins = [
+    normalizeOrigin(env.FRONTEND_URL),
+    'http://localhost:3000',
+  ]
+
   ioInstance = new Server(httpServer, {
     cors: {
-      origin: env.FRONTEND_URL,
+      origin: (origin) => {
+        if (!origin) return true
+        const normalized = normalizeOrigin(origin)
+        return allowedOrigins.includes(normalized) || /\.vercel\.app$/.test(normalized)
+      },
       credentials: true,
     },
   })

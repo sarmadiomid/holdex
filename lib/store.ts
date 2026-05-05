@@ -115,10 +115,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setToken: (token) => set({ token }),
 
-  setAuthenticatedUser: (userData, token) => set({
+  setAuthenticatedUser: (userData: any, token) => set({
     user: userData,
     token,
     isAuthenticated: true,
+    allocations: userData.allocations || { BTC: 0, GOLD: 0, OIL: 0 },
+    initialPrices: userData.initialPrices || createInitialPrices(),
   }),
 
   updateAssetPrice: (twelveDataSymbol, price) => {
