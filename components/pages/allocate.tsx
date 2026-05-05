@@ -35,6 +35,29 @@ export function Allocate() {
     haptic.impact('medium')
 
     try {
+      if (!hasAllocations) {
+        const res = await fetch(`${BACKEND_URL}/api/allocation/sell`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (!res.ok) {
+          const err = await res.json()
+          setError(err.error || 'Failed to sell holdings')
+          haptic.notification('error')
+          return
+        }
+
+        const data = await res.json()
+        setAllocations(data.allocations || { BTC: 0, GOLD: 0, OIL: 0 })
+        haptic.notification('success')
+        setActiveTab('dashboard')
+        return
+      }
+
       const res = await fetch(`${BACKEND_URL}/api/allocation`, {
         method: 'POST',
         headers: {
@@ -195,12 +218,14 @@ export function Allocate() {
       >
         <Button
           onClick={handleConfirm}
-          disabled={!hasAllocations || submitting}
+          disabled={submitting}
           className={cn(
             'w-full h-14 text-lg font-semibold rounded-xl transition-all',
             hasAllocations && !submitting
               ? 'bg-gradient-to-r from-neon-cyan to-neon-pink text-background neon-glow-cyan'
-              : 'bg-muted text-muted-foreground'
+              : submitting
+                ? 'bg-muted text-muted-foreground'
+                : 'bg-neon-pink/20 border border-neon-pink/40 text-neon-pink hover:bg-neon-pink/30'
           )}
         >
           {submitting ? (
@@ -211,14 +236,14 @@ export function Allocate() {
           ) : (
             <>
               <Check className="size-5 mr-2" />
-              Confirm Allocation
+              {hasAllocations ? 'Confirm Allocation' : 'Clear All Holdings'}
             </>
           )}
         </Button>
 
         {!hasAllocations && !submitting && (
           <p className="text-center text-sm text-muted-foreground mt-2">
-            Allocate at least some funds to continue
+            This will sell all your current holdings and return funds to your wallet
           </p>
         )}
       </motion.div>

@@ -74,6 +74,7 @@ interface AppState {
   }) => void
   setLeverage: (leverage: number) => void
   addBalance: (amount: number) => void
+  applySellResult: (newBalance: number) => void
 }
 
 const createInitialPrices = (): Record<AssetType, number | null> => ({
@@ -85,7 +86,7 @@ const createInitialPrices = (): Record<AssetType, number | null> => ({
 const TWELVE_DATA_TO_ASSET: Record<string, AssetType> = {
   'BTC/USD': 'BTC',
   'XAU/USD': 'GOLD',
-  'WTI/USD': 'OIL',
+  'USOIL': 'OIL',
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -305,6 +306,20 @@ export const useAppStore = create<AppState>((set, get) => ({
         ...state.user,
         balance: state.user.balance + amount,
         portfolioValue: state.user.portfolioValue + amount,
+      },
+    }))
+  },
+
+  applySellResult: (newBalance: number) => {
+    set((state) => ({
+      allocations: { BTC: 0, GOLD: 0, OIL: 0 },
+      initialPrices: createInitialPrices(),
+      user: {
+        ...state.user,
+        balance: newBalance,
+        portfolioValue: newBalance,
+        totalPnl: 0,
+        totalPnlPercent: 0,
       },
     }))
   },
