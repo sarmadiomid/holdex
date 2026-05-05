@@ -141,7 +141,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       // Recalculate portfolio client-side with per-asset multipliers
-      const multipliers: Record<string, number> = { BTC: 150, GOLD: 80, OIL: 120 }
+      const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, OIL: 80 }
       let totalValue = 0
       let totalAllocated = 0
 
@@ -228,7 +228,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (allocatedAmount > 0 && initialPrices[asset.id]) {
         const priceChange = (asset.price - initialPrices[asset.id]!) / initialPrices[asset.id]!
-        const amplifiedChange = priceChange * 500
+        const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, OIL: 80 }
+        const amplifiedChange = priceChange * (multipliers[asset.id] || 50)
         const leveragedChange = amplifiedChange * user.leverage
         totalValue += allocatedAmount * (1 + leveragedChange)
       }

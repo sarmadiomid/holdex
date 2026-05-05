@@ -32,7 +32,7 @@ export function Header() {
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-neon-cyan/30">
             <Wallet className="size-4 text-neon-cyan" />
             <span className="text-sm font-mono font-medium text-foreground">
-              {user.balance.toLocaleString()}
+              {user.portfolioValue.toLocaleString()}
             </span>
             <span className="text-xs text-neon-cyan font-medium">HLX</span>
           </div>
