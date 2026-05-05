@@ -193,7 +193,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (allocatedAmount > 0 && initialPrices[asset.id]) {
         const priceChange = (asset.price - initialPrices[asset.id]!) / initialPrices[asset.id]!
-        const leveragedChange = priceChange * user.leverage
+        const amplifiedChange = priceChange * 50
+        const leveragedChange = amplifiedChange * user.leverage
         totalValue += allocatedAmount * (1 + leveragedChange)
       }
     }
