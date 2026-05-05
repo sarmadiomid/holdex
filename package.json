@@ -1,12 +1,17 @@
 {
-  "name": "my-project",
-  "version": "0.1.0",
+  "name": "holdex",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "deploy:vercel": "vercel --prod",
+    "server:dev": "cd server && npm run dev",
+    "server:build": "cd server && npm run build",
+    "server:start": "cd server && npm start",
+    "install:all": "npm install && cd server && npm install"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

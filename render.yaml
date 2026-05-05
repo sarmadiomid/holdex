@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: holdex-backend
+    env: node
+    region: frankfurt
+    plan: free
+    rootDir: server
+    buildCommand: npm install --omit=dev && npm install typescript tsx
+    startCommand: npx tsx src/index.ts
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGODB_URI
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: TWELVE_DATA_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
