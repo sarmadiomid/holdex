@@ -139,7 +139,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       // Recalculate portfolio client-side with per-asset multipliers
-      const multipliers: Record<string, number> = { BTC: 900, GOLD: 50, OIL: 200 }
+      const multipliers: Record<string, number> = { BTC: 150, GOLD: 80, OIL: 120 }
       let totalValue = 0
       let totalAllocated = 0
 

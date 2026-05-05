@@ -1,7 +1,7 @@
 const VOLATILITY_MULTIPLIER: Record<string, number> = {
-  BTC: 900,
-  GOLD: 50,
-  OIL: 200,
+  BTC: 150,
+  GOLD: 80,
+  OIL: 120,
 }
 
 interface Allocations {
