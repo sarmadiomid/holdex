@@ -1,0 +1,8 @@
+2026-05-05T12:32:33.224Z [ERROR]: MongoDB connection failed {
+  "error": {
+    "code": "ETIMEOUT",
+    "syscall": "querySrv",
+    "hostname": "_mongodb._tcp.cluster0.lncnmxz.mongodb.net"
+  }
+}
+2026-05-05T12:45:39.015Z [ERROR]: MongoDB connection failed: querySrv ETIMEOUT _mongodb._tcp.cluster0.lncnmxz.mongodb.net 

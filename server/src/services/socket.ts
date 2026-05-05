@@ -1,0 +1,150 @@
+import { Server as HTTPServer } from 'http'
+import { Server, Socket } from 'socket.io'
+import { env } from '../config/env'
+import { logger } from '../utils/logger'
+import { User, IUser } from '../db/models/User'
+import { calculatePortfolioValue } from '../services/portfolio'
+import * as jwt from 'jsonwebtoken'
+
+interface MarketPrice {
+  symbol: string
+  price: number
+  timestamp: number
+}
+
+interface SocketData {
+  userId: string
+  telegramId: number
+}
+
+type AuthSocket = Socket & SocketData
+
+let latestPrices: Record<string, MarketPrice> = {}
+let ioInstance: Server | null = null
+
+export function setupSocketIO(httpServer: HTTPServer): Server {
+  ioInstance = new Server(httpServer, {
+    cors: {
+      origin: env.FRONTEND_URL,
+      credentials: true,
+    },
+  })
+
+  ioInstance.use(async (socket, next) => {
+    try {
+      const s = socket as AuthSocket
+      const token = socket.handshake.auth.token
+      if (!token) {
+        return next(new Error('Authentication required'))
+      }
+
+      const decoded = jwt.verify(token, env.JWT_SECRET) as {
+        userId: string
+        telegramId: number
+      }
+      s.userId = decoded.userId
+      s.telegramId = decoded.telegramId
+      next()
+    } catch {
+      next(new Error('Invalid token'))
+    }
+  })
+
+  ioInstance.on('connection', (socket) => {
+    const s = socket as AuthSocket
+    logger.info(`Socket connected: ${s.telegramId}`)
+    s.join(s.telegramId.toString())
+
+    socket.on('disconnect', () => {
+      logger.info(`Socket disconnected: ${s.telegramId}`)
+    })
+  })
+
+  return ioInstance
+}
+
+export function broadcastPriceUpdate(
+  symbol: string,
+  price: number,
+  timestamp: number,
+) {
+  latestPrices[symbol] = { symbol, price, timestamp }
+  if (ioInstance) {
+    ioInstance.emit('price_update', { symbol, price, timestamp })
+  }
+}
+
+export function broadcastUserUpdate(
+  telegramId: number,
+  userData: Partial<IUser>,
+) {
+  if (!ioInstance) return
+  ioInstance.to(telegramId.toString()).emit('user_update', userData)
+}
+
+export function broadcastAllocationUpdate(
+  telegramId: number,
+  allocations: { BTC: number; GOLD: number; OIL: number },
+) {
+  if (!ioInstance) return
+  ioInstance.emit('allocation_update', { telegramId, allocations })
+}
+
+export function broadcastAllPrices() {
+  if (!ioInstance) return
+  ioInstance.emit('prices_snapshot', latestPrices)
+}
+
+export async function recalcAndBroadcastUser(user: IUser) {
+  const prices = latestPrices
+  if (!prices['BTC/USD'] || !prices['XAU/USD'] || !prices['WTI/USD']) {
+    return user
+  }
+
+  const currentPrices: Record<string, number> = {
+    BTC: prices['BTC/USD'].price,
+    GOLD: prices['XAU/USD'].price,
+    OIL: prices['WTI/USD'].price,
+  }
+
+  const initialPrices: Record<string, number> = {}
+  if (user.initialPrices.BTC) initialPrices.BTC = user.initialPrices.BTC
+  if (user.initialPrices.GOLD) initialPrices.GOLD = user.initialPrices.GOLD
+  if (user.initialPrices.OIL) initialPrices.OIL = user.initialPrices.OIL
+
+  const portfolio = calculatePortfolioValue(
+    user.balance,
+    user.allocations,
+    initialPrices,
+    currentPrices,
+    user.leverage,
+  )
+
+  const updated = await User.findByIdAndUpdate(
+    user._id,
+    {
+      portfolioValue: portfolio.value,
+      totalPnl: portfolio.pnl,
+      totalPnlPercent: portfolio.pnlPercent,
+    },
+    { new: true },
+  )
+
+  if (updated) {
+    broadcastUserUpdate(updated.telegramId, {
+      portfolioValue: updated.portfolioValue,
+      totalPnl: updated.totalPnl,
+      totalPnlPercent: updated.totalPnlPercent,
+    })
+  }
+
+  return updated || user
+}
+
+export function getLatestPrices() {
+  return latestPrices
+}
+
+export function getIo() {
+  return ioInstance
+}
