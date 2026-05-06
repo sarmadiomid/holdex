@@ -31,8 +31,14 @@ export function EarnPage() {
 
     // Open URL if exists
     if (task.url) {
-      if (webApp && (webApp as any).openLink) {
-        ;(webApp as any).openLink(task.url)
+      if (webApp) {
+        // Use openTelegramLink for Telegram links (channels, groups, bots)
+        if (task.url.includes('t.me/')) {
+          webApp.openTelegramLink(task.url)
+        } else {
+          // Use openLink for external links (Twitter, Instagram, YouTube, etc.)
+          webApp.openLink(task.url)
+        }
       } else {
         window.open(task.url, '_blank')
       }
