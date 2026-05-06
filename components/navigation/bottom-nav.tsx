@@ -34,7 +34,7 @@ export function BottomNav() {
                 setActiveTab(item.id)
               }}
               className={cn(
-                'relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors',
+                'relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors flex-1',
                 isActive ? 'text-neon-cyan' : 'text-muted-foreground'
               )}
               whileTap={{ scale: 0.9 }}
@@ -49,7 +49,7 @@ export function BottomNav() {
               )}
               <Icon className={cn('relative z-10 size-5', isActive && 'text-glow-cyan')} />
               <span className={cn(
-                'relative z-10 text-xs font-medium',
+                'relative z-10 text-xs font-medium whitespace-nowrap',
                 isActive && 'text-glow-cyan'
               )}>
                 {item.label}

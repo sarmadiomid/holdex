@@ -4,9 +4,15 @@ import { motion } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { NeonText } from '@/components/ui/neon-text'
 import { Wallet } from 'lucide-react'
+import { useTelegram } from '@/hooks/use-telegram'
 
-export function Header() {
+interface HeaderProps {
+  onProfileClick: () => void
+}
+
+export function Header({ onProfileClick }: HeaderProps) {
   const user = useAppStore((state) => state.user)
+  const { haptic } = useTelegram()
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-glass-border safe-area-pt">
@@ -37,11 +43,22 @@ export function Header() {
             <span className="text-xs text-neon-cyan font-medium">HLX</span>
           </div>
           
-          <div className="size-9 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center">
-            <span className="text-sm font-bold text-background">
-              {user.firstName.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          <motion.button
+            onClick={() => {
+              haptic.impact('light')
+              onProfileClick()
+            }}
+            whileTap={{ scale: 0.9 }}
+            className="size-9 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center cursor-pointer hover:shadow-lg hover:shadow-neon-cyan/20 transition-shadow"
+          >
+            {user.photoUrl ? (
+              <img src={user.photoUrl} alt={user.firstName} className="size-full rounded-full object-cover" />
+            ) : (
+              <span className="text-sm font-bold text-background">
+                {user.firstName.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </motion.button>
         </motion.div>
       </div>
     </header>

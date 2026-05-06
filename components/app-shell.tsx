@@ -10,6 +10,7 @@ import { Allocate } from '@/components/pages/allocate'
 import { StorePage } from '@/components/pages/store'
 import { Leaderboard } from '@/components/pages/leaderboard'
 import { EarnPage } from '@/components/pages/earn'
+import { Profile } from '@/components/pages/profile'
 import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
 import { useSocket } from '@/hooks/use-socket'
@@ -158,6 +159,7 @@ export function AppShell() {
   const { webApp, isReady, isTelegram } = useTelegram()
   const [authenticating, setAuthenticating] = useState(true)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [showProfile, setShowProfile] = useState(false)
 
   useSocket({ token, enabled: !!token && isAuthenticated })
 
@@ -241,7 +243,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header onProfileClick={() => setShowProfile(true)} />
 
       <main className="flex-1 pt-16 pb-24 px-4 overflow-y-auto">
         <AnimatePresence mode="wait">
@@ -264,6 +266,10 @@ export function AppShell() {
       </main>
 
       <BottomNav />
+
+      <AnimatePresence>
+        {showProfile && <Profile onClose={() => setShowProfile(false)} />}
+      </AnimatePresence>
     </div>
   )
 }
