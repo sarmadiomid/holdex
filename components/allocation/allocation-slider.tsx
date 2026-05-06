@@ -90,7 +90,10 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
           <div>
             <h3 className="font-semibold text-foreground">{asset.name}</h3>
             <p className="text-sm text-muted-foreground">
-              ${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              ${asset.price.toLocaleString(undefined, { 
+                minimumFractionDigits: asset.id === 'EUR' ? 4 : 2,
+                maximumFractionDigits: asset.id === 'EUR' ? 4 : 2
+              })}
             </p>
           </div>
         </div>

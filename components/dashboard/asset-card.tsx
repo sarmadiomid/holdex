@@ -104,8 +104,8 @@ export function AssetCard({ asset, index }: AssetCardProps) {
               animate={{ scale: 1 }}
             >
               ${asset.price.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: asset.id === 'EUR' ? 4 : 2,
+                maximumFractionDigits: asset.id === 'EUR' ? 4 : 2
               })}
             </motion.p>
             <div className={cn(
