@@ -60,6 +60,13 @@ export function parseTelegramUser(data: Record<string, string>) {
 
 export function parseStartParam(initData: string): string | null {
   const params = new URLSearchParams(initData)
-  const startParam = params.get('startapp') || params.get('start_param')
-  return startParam || null
+  // Try to get start_param from initData (this is passed by Telegram)
+  const startParam = params.get('start_param')
+  if (startParam) return startParam
+  
+  // Fallback: try startapp (though this should be converted to start_param by Telegram)
+  const startApp = params.get('startapp')
+  if (startApp) return startApp
+  
+  return null
 }

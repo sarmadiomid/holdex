@@ -39,6 +39,9 @@ router.post(
       if (referrerTelegramId) {
         referrerId = parseInt(referrerTelegramId, 10)
         if (isNaN(referrerId)) referrerId = null
+        logger.info(`Referral detected: ${referrerId}`)
+      } else {
+        logger.info('No referral parameter found in initData')
       }
 
       let user = await User.findOne({ telegramId: telegramUser.id })
