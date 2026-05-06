@@ -4,6 +4,7 @@ import { User } from '../db/models/User'
 import { Position } from '../db/models/Position'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { validate } from '../middleware/validate'
+import { checkChannelMembership } from '../services/telegram'
 import { logger } from '../utils/logger'
 
 const router = Router()
@@ -21,6 +22,12 @@ const TASK_REWARDS: Record<string, number> = {
   'invite-5': 2500,
   'follow-instagram': 500,
   'watch-demo': 300,
+}
+
+// Channel IDs for verification (must add bot as admin to these channels)
+const CHANNEL_VERIFICATION: Record<string, string> = {
+  'follow-telegram': '@holdex_channel', // Replace with your actual channel username or ID
+  // Add more channels as needed
 }
 
 router.post(
@@ -45,6 +52,19 @@ router.post(
       // Check if task already completed
       if (user.completedTasks && user.completedTasks.includes(taskId)) {
         return res.status(400).json({ error: 'Task already completed' })
+      }
+
+      // Verify channel membership if required
+      const channelId = CHANNEL_VERIFICATION[taskId]
+      if (channelId) {
+        const isMember = await checkChannelMembership(telegramId!, channelId)
+        if (!isMember) {
+          return res.status(403).json({ 
+            error: 'Channel membership verification failed',
+            message: 'Please join the channel first and try again'
+          })
+        }
+        logger.info(`Channel membership verified for user ${telegramId}, task ${taskId}`)
       }
 
       // Add reward to balance and mark task as completed

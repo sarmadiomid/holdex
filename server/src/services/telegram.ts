@@ -1,0 +1,97 @@
+import { env } from '../config/env'
+import { logger } from '../utils/logger'
+
+interface ChatMemberResponse {
+  ok: boolean
+  result?: {
+    status: 'creator' | 'administrator' | 'member' | 'restricted' | 'left' | 'kicked'
+    user: {
+      id: number
+      is_bot: boolean
+      first_name: string
+    }
+  }
+  description?: string
+}
+
+/**
+ * Check if a user is a member of a Telegram channel/group
+ * @param userId - Telegram user ID
+ * @param chatId - Channel/Group ID (e.g., @channelname or -1001234567890)
+ * @returns true if user is a member, false otherwise
+ */
+export async function checkChannelMembership(
+  userId: number,
+  chatId: string,
+): Promise<boolean> {
+  try {
+    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getChatMember`
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        user_id: userId,
+      }),
+    })
+
+    const data: ChatMemberResponse = await response.json()
+
+    if (!data.ok) {
+      logger.warn(`Failed to check channel membership: ${data.description}`)
+      return false
+    }
+
+    // User is considered a member if they have any of these statuses
+    const memberStatuses = ['creator', 'administrator', 'member']
+    const isMember = data.result && memberStatuses.includes(data.result.status)
+
+    logger.info(
+      `Channel membership check: userId=${userId}, chatId=${chatId}, status=${data.result?.status}, isMember=${isMember}`,
+    )
+
+    return isMember
+  } catch (error) {
+    logger.error('Error checking channel membership', { error, userId, chatId })
+    return false
+  }
+}
+
+/**
+ * Get channel/group ID from username
+ * Note: The bot must be an admin in the channel for this to work
+ */
+export async function getChatInfo(chatId: string): Promise<{
+  id: number
+  title: string
+  type: string
+} | null> {
+  try {
+    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getChat`
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!data.ok) {
+      logger.warn(`Failed to get chat info: ${data.description}`)
+      return null
+    }
+
+    return data.result
+  } catch (error) {
+    logger.error('Error getting chat info', { error, chatId })
+    return null
+  }
+}

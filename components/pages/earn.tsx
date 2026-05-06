@@ -56,7 +56,9 @@ export function EarnPage() {
             completeTask(task.id)
             haptic.notification('success')
           } else {
+            const error = await res.json()
             haptic.notification('error')
+            alert(error.message || error.error || 'Failed to complete task')
           }
         } else {
           // Fallback for non-authenticated users
@@ -65,9 +67,8 @@ export function EarnPage() {
         }
       } catch (error) {
         console.error('Task completion error:', error)
-        // Still complete locally on error
-        completeTask(task.id)
-        haptic.notification('success')
+        haptic.notification('error')
+        alert('Network error. Please try again.')
       } finally {
         setProcessingId(null)
       }
