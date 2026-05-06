@@ -43,6 +43,8 @@ router.post(
 
       let user = await User.findOne({ telegramId: telegramUser.id })
 
+      const isNewUser = !user
+
       if (!user) {
         user = await User.create({
           telegramId: telegramUser.id,
@@ -61,16 +63,19 @@ router.post(
         })
 
         logger.info(`New user registered: ${telegramUser.id} (${telegramUser.first_name})`)
-
-        if (referrerId) {
-          await processReferral(user, referrerId)
-        }
       } else {
         user.username = telegramUser.username || user.username
         user.firstName = telegramUser.first_name || user.firstName
         user.lastName = telegramUser.last_name || user.lastName
         user.photoUrl = telegramUser.photo_url || user.photoUrl
         await user.save()
+      }
+
+      // Process referral only for new users
+      if (isNewUser && referrerId) {
+        await processReferral(user, referrerId)
+        // Reload user to get updated balance if they were referred
+        user = await User.findById(user._id)
       }
 
       const token = jwt.sign(

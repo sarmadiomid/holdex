@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X, User, Wallet, TrendingUp, Trophy, Users, Copy, Check, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,8 @@ import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
 import { cn } from '@/lib/utils'
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+
 interface ProfileProps {
   onClose: () => void
 }
@@ -17,9 +19,32 @@ interface ProfileProps {
 export function Profile({ onClose }: ProfileProps) {
   const { haptic, webApp } = useTelegram()
   const user = useAppStore((state) => state.user)
+  const token = useAppStore((state) => state.token)
   const [copied, setCopied] = useState(false)
+  const [referralStats, setReferralStats] = useState<{
+    referralCount: number
+    totalEarned: number
+  } | null>(null)
 
-  const referralLink = `https://t.me/holdex_bot?start=${user.id}`
+  const referralLink = `https://t.me/holdex_bot?start=${user.telegramId}`
+
+  useEffect(() => {
+    const fetchReferralStats = async () => {
+      if (!token) return
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/referral/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setReferralStats(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch referral stats:', error)
+      }
+    }
+    fetchReferralStats()
+  }, [token])
 
   const handleCopyReferral = () => {
     navigator.clipboard.writeText(referralLink)
@@ -128,13 +153,28 @@ export function Profile({ onClose }: ProfileProps) {
             transition={{ delay: 0.2 }}
           >
             <GlassCard className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="size-5 text-neon-cyan" />
-                <h3 className="font-semibold text-foreground">Invite Friends</h3>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="size-5 text-neon-cyan" />
+                  <h3 className="font-semibold text-foreground">Invite Friends</h3>
+                </div>
+                {referralStats && (
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Referred</p>
+                    <p className="text-lg font-bold text-neon-cyan">{referralStats.referralCount}</p>
+                  </div>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Share your referral link and earn rewards when friends join
+              <p className="text-sm text-muted-foreground mb-2">
+                Earn <span className="text-neon-gold font-bold">10 HLX</span> for each friend who joins with your link
               </p>
+              {referralStats && referralStats.totalEarned > 0 && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-neon-gold/10 border border-neon-gold/30">
+                  <p className="text-sm text-neon-gold font-medium">
+                    Total earned: <span className="font-bold">{referralStats.totalEarned} HLX</span>
+                  </p>
+                </div>
+              )}
               <div className="flex gap-2">
                 <div className="flex-1 px-3 py-2 rounded-lg bg-muted/40 border border-border/40 text-sm font-mono text-foreground truncate">
                   {referralLink}

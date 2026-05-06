@@ -1,4 +1,5 @@
 import { User, IUser } from '../db/models/User'
+import { Position } from '../db/models/Position'
 import { logger } from '../utils/logger'
 import mongoose from 'mongoose'
 
@@ -27,9 +28,23 @@ export async function processReferral(
     return
   }
 
+  // Add referral reward to referrer
   referrer.balance += REFERRAL_REWARD
+  referrer.portfolioValue += REFERRAL_REWARD
   referrer.referredUsers.push(newUser._id as mongoose.Types.ObjectId)
   await referrer.save()
+
+  // Set referrer on new user
+  newUser.referrerId = referrer._id as mongoose.Types.ObjectId
+  await newUser.save()
+
+  // Create position record for referral reward
+  await Position.create({
+    userId: referrer._id,
+    type: 'store_purchase',
+    amount: 0,
+    hlxValue: REFERRAL_REWARD,
+  })
 
   logger.info(
     `Referral reward: ${REFERRAL_REWARD} HLX to user ${referrer.telegramId} for referring ${newUser.telegramId}`,

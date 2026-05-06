@@ -14,6 +14,7 @@ import allocationRoutes from './routes/allocation'
 import starsRoutes from './routes/stars'
 import leaderboardRoutes from './routes/leaderboard'
 import earnRoutes from './routes/earn'
+import referralRoutes from './routes/referral'
 import { generalLimiter } from './middleware/rateLimit'
 
 async function bootstrap() {
@@ -65,6 +66,7 @@ async function bootstrap() {
   app.use('/api/stars', starsRoutes)
   app.use('/api', leaderboardRoutes)
   app.use('/api/earn', earnRoutes)
+  app.use('/api/referral', referralRoutes)
 
   app.use((err: any, _req: any, res: any, _next: any) => {
     logger.error('Unhandled error', { error: err })
