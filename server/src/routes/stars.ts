@@ -42,7 +42,7 @@ router.post(
         return res.status(400).json({ error: 'Invalid package' })
       }
 
-      const invoiceUrl = `https://t.me/holdex_bot?start=pay_${packageId}_${telegramId}`
+      const invoiceUrl = `https://t.me/holdextest_bot?start=pay_${packageId}_${telegramId}`
 
       res.json({
         invoiceUrl,

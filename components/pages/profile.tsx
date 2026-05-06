@@ -26,7 +26,7 @@ export function Profile({ onClose }: ProfileProps) {
     totalEarned: number
   } | null>(null)
 
-  const referralLink = `https://t.me/holdex_bot?start=${user.telegramId}`
+  const referralLink = `https://t.me/holdextest_bot?start=${user.telegramId}`
 
   useEffect(() => {
     const fetchReferralStats = async () => {
