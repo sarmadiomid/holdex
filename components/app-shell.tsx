@@ -9,6 +9,7 @@ import { Dashboard } from '@/components/pages/dashboard'
 import { Allocate } from '@/components/pages/allocate'
 import { StorePage } from '@/components/pages/store'
 import { Leaderboard } from '@/components/pages/leaderboard'
+import { EarnPage } from '@/components/pages/earn'
 import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
 import { useSocket } from '@/hooks/use-socket'
@@ -255,6 +256,7 @@ export function AppShell() {
           >
             {activeTab === 'dashboard' && <Dashboard />}
             {activeTab === 'allocate' && <Allocate />}
+            {activeTab === 'earn' && <EarnPage />}
             {activeTab === 'store' && <StorePage />}
             {activeTab === 'leaderboard' && <Leaderboard />}
           </motion.div>

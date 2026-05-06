@@ -126,3 +126,15 @@ export interface Transaction {
   timestamp: number
   description: string
 }
+
+// Earn Task
+export interface EarnTask {
+  id: string
+  title: string
+  description: string
+  reward: number // HLX tokens
+  type: 'follow' | 'watch' | 'visit' | 'share' | 'invite'
+  url?: string
+  icon: string
+  completed: boolean
+}

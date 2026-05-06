@@ -23,6 +23,7 @@ export interface IUser extends Document {
   totalPnlPercent: number
   referrerId?: mongoose.Types.ObjectId
   referredUsers: mongoose.Types.ObjectId[]
+  completedTasks: string[]
   weekStart: Date
   createdAt: Date
   updatedAt: Date
@@ -52,6 +53,7 @@ const UserSchema = new Schema<IUser>(
     totalPnlPercent: { type: Number, required: true, default: 0 },
     referrerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     referredUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    completedTasks: [{ type: String }],
     weekStart: { type: Date, required: true, default: Date.now },
   },
   { timestamps: true },

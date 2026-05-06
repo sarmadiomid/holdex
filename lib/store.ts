@@ -1,8 +1,8 @@
 'use client'
 
 import { create } from 'zustand'
-import type { Asset, User, AssetType, LeaderboardEntry, Transaction, PrizePool } from './types'
-import { initialAssets, mockPrizePool } from './mock-data'
+import type { Asset, User, AssetType, LeaderboardEntry, Transaction, PrizePool, EarnTask } from './types'
+import { initialAssets, mockPrizePool, earnTasks } from './mock-data'
 
 interface BackendLeaderboardEntry {
   rank: number
@@ -45,9 +45,12 @@ interface AppState {
 
   transactions: Transaction[]
 
-  activeTab: 'dashboard' | 'allocate' | 'store' | 'leaderboard'
+  earnTasks: EarnTask[]
 
-  setActiveTab: (tab: 'dashboard' | 'allocate' | 'store' | 'leaderboard') => void
+  activeTab: 'dashboard' | 'allocate' | 'store' | 'leaderboard' | 'earn'
+
+  setActiveTab: (tab: 'dashboard' | 'allocate' | 'store' | 'leaderboard' | 'earn') => void
+  completeTask: (taskId: string) => void
   setToken: (token: string | null) => void
   setAuthenticatedUser: (userData: User, token: string) => void
   updateAssetPrice: (twelveDataSymbol: string, price: number) => void
@@ -110,9 +113,28 @@ export const useAppStore = create<AppState>((set, get) => ({
   leaderboardData: null,
   prizePool: mockPrizePool,
   transactions: [],
+  earnTasks,
   activeTab: 'dashboard',
 
   setActiveTab: (tab) => set({ activeTab: tab }),
+
+  completeTask: (taskId) => {
+    set((state) => {
+      const task = state.earnTasks.find((t) => t.id === taskId)
+      if (!task || task.completed) return state
+
+      return {
+        earnTasks: state.earnTasks.map((t) =>
+          t.id === taskId ? { ...t, completed: true } : t
+        ),
+        user: {
+          ...state.user,
+          balance: state.user.balance + task.reward,
+          portfolioValue: state.user.portfolioValue + task.reward,
+        },
+      }
+    })
+  },
 
   setToken: (token) => set({ token }),
 

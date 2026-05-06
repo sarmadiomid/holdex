@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { LayoutDashboard, PieChart, Store, Trophy } from 'lucide-react'
+import { LayoutDashboard, PieChart, Store, Trophy, Coins } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
 import { cn } from '@/lib/utils'
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
   { id: 'allocate' as const, label: 'Allocate', icon: PieChart },
+  { id: 'earn' as const, label: 'Earn', icon: Coins },
   { id: 'store' as const, label: 'Store', icon: Store },
   { id: 'leaderboard' as const, label: 'Rankings', icon: Trophy }
 ]
