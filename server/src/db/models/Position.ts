@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose'
 export interface IPosition extends Document {
   userId: mongoose.Types.ObjectId
   type: 'buy' | 'sell' | 'allocate' | 'store_purchase'
-  asset?: 'BTC' | 'GOLD' | 'OIL'
+  asset?: 'BTC' | 'GOLD' | 'EUR'
   amount: number
   hlxValue: number
   priceAtTime?: number
@@ -18,7 +18,7 @@ const PositionSchema = new Schema<IPosition>(
       enum: ['buy', 'sell', 'allocate', 'store_purchase'],
       required: true,
     },
-    asset: { type: String, enum: ['BTC', 'GOLD', 'OIL'] },
+    asset: { type: String, enum: ['BTC', 'GOLD', 'EUR'] },
     amount: { type: Number, required: true },
     hlxValue: { type: Number, required: true },
     priceAtTime: { type: Number },

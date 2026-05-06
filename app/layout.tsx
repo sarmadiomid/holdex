@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Holdex - Investment Simulator',
-  description: 'Premium investment simulator - Trade BTC, Gold, Oil with HLX tokens',
+  description: 'Premium investment simulator - Trade BTC, Gold, EUR/USD with HLX tokens',
   generator: 'v0.app',
   icons: {
     icon: [

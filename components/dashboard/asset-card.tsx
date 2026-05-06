@@ -16,7 +16,7 @@ interface AssetCardProps {
 const assetIcons: Record<string, string> = {
   BTC: '₿',
   GOLD: 'Au',
-  OIL: 'WTI'
+  EUR: '€'
 }
 
 export function AssetCard({ asset, index }: AssetCardProps) {

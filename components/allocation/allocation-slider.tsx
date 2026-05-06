@@ -16,7 +16,7 @@ interface AllocationSliderProps {
 const assetIcons: Record<string, string> = {
   BTC: '₿',
   GOLD: 'Au',
-  OIL: 'WTI'
+  EUR: '€'
 }
 
 export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps) {

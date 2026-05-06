@@ -1,5 +1,5 @@
 // Asset types
-export type AssetType = 'BTC' | 'GOLD' | 'OIL'
+export type AssetType = 'BTC' | 'GOLD' | 'EUR'
 
 export interface Asset {
   id: AssetType

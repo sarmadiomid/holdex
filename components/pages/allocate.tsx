@@ -52,7 +52,7 @@ export function Allocate() {
         }
 
         const data = await res.json()
-        setAllocations(data.allocations || { BTC: 0, GOLD: 0, OIL: 0 })
+        setAllocations(data.allocations || { BTC: 0, GOLD: 0, EUR: 0 })
         haptic.notification('success')
         setActiveTab('dashboard')
         return
@@ -67,7 +67,7 @@ export function Allocate() {
         body: JSON.stringify({
           BTC: allocations.BTC,
           GOLD: allocations.GOLD,
-          OIL: allocations.OIL,
+          EUR: allocations.EUR,
         }),
       })
 

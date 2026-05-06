@@ -124,8 +124,8 @@ export function startLeaderboardCron() {
         {},
         {
           $set: {
-            allocations: { BTC: 0, GOLD: 0, OIL: 0 },
-            initialPrices: { BTC: null, GOLD: null, OIL: null },
+            allocations: { BTC: 0, GOLD: 0, EUR: 0 },
+            initialPrices: { BTC: null, GOLD: null, EUR: null },
             portfolioValue: 100,
             totalPnl: 0,
             totalPnlPercent: 0,

@@ -50,11 +50,11 @@ export interface UserUpdateEvent {
   totalPnl?: number
   totalPnlPercent?: number
   balance?: number
-  allocations?: { BTC: number; GOLD: number; OIL: number }
+  allocations?: { BTC: number; GOLD: number; EUR: number }
   leverage?: number
 }
 
 export interface AllocationUpdateEvent {
   telegramId: number
-  allocations: { BTC: number; GOLD: number; OIL: number }
+  allocations: { BTC: number; GOLD: number; EUR: number }
 }

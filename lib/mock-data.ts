@@ -23,12 +23,12 @@ export const initialAssets: Asset[] = [
     color: 'neon-cyan'
   },
   {
-    id: 'OIL',
-    name: 'Crude Oil',
-    symbol: 'WTI',
-    icon: '🛢️',
-    price: 78.45,
-    change24h: -1.23,
+    id: 'EUR',
+    name: 'Euro/USD',
+    symbol: 'EUR/USD',
+    icon: '💶',
+    price: 1.17,
+    change24h: 0.23,
     allocation: 0,
     color: 'neon-pink'
   }
@@ -213,7 +213,7 @@ export function simulateChange24h(currentChange: number): number {
 export function generatePriceUpdate(asset: Asset): Asset {
   const newPrice = simulatePriceChange(
     asset.price, 
-    asset.id === 'BTC' ? 0.003 : asset.id === 'OIL' ? 0.002 : 0.001
+    asset.id === 'BTC' ? 0.003 : asset.id === 'EUR' ? 0.0005 : 0.001
   )
   const newChange = simulateChange24h(asset.change24h)
   

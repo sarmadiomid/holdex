@@ -1,13 +1,13 @@
 const VOLATILITY_MULTIPLIER: Record<string, number> = {
   BTC: 100,
   GOLD: 50,
-  OIL: 80,
+  EUR: 1000,
 }
 
 interface Allocations {
   BTC: number
   GOLD: number
-  OIL: number
+  EUR: number
 }
 
 interface PortfolioResult {
@@ -25,7 +25,7 @@ export function calculatePortfolioValue(
 ): PortfolioResult {
   let totalValue = 0
 
-  for (const asset of ['BTC', 'GOLD', 'OIL'] as const) {
+  for (const asset of ['BTC', 'GOLD', 'EUR'] as const) {
     const allocPercent = allocations[asset] / 100
     if (allocPercent <= 0) continue
 
@@ -47,7 +47,7 @@ export function calculatePortfolioValue(
   }
 
   const unallocatedPercent =
-    1 - (allocations.BTC + allocations.GOLD + allocations.OIL) / 100
+    1 - (allocations.BTC + allocations.GOLD + allocations.EUR) / 100
   if (unallocatedPercent > 0) {
     totalValue += balance * unallocatedPercent
   }
@@ -69,9 +69,9 @@ export function validateAllocations(allocations: Partial<Allocations>): {
 } {
   const btc = allocations.BTC ?? 0
   const gold = allocations.GOLD ?? 0
-  const oil = allocations.OIL ?? 0
+  const eur = allocations.EUR ?? 0
 
-  const total = btc + gold + oil
+  const total = btc + gold + eur
 
   if (total < 0) {
     return { valid: false, error: 'Allocations cannot be negative' }

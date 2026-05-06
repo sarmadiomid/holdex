@@ -83,13 +83,13 @@ interface AppState {
 const createInitialPrices = (): Record<AssetType, number | null> => ({
   BTC: null,
   GOLD: null,
-  OIL: null,
+  EUR: null,
 })
 
 const TWELVE_DATA_TO_ASSET: Record<string, AssetType> = {
   'BTC/USD': 'BTC',
   'XAU/USD': 'GOLD',
-  'USOIL': 'OIL',
+  'EUR/USD': 'EUR',
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -107,7 +107,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isAuthenticated: false,
   token: null,
   assets: initialAssets,
-  allocations: { BTC: 0, GOLD: 0, OIL: 0 },
+  allocations: { BTC: 0, GOLD: 0, EUR: 0 },
   initialPrices: createInitialPrices(),
   leaderboard: [],
   leaderboardData: null,
@@ -142,7 +142,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     user: userData,
     token,
     isAuthenticated: true,
-    allocations: userData.allocations || { BTC: 0, GOLD: 0, OIL: 0 },
+    allocations: userData.allocations || { BTC: 0, GOLD: 0, EUR: 0 },
     initialPrices: userData.initialPrices || createInitialPrices(),
   }),
 
@@ -164,7 +164,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       // Recalculate portfolio client-side with per-asset multipliers
-      const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, OIL: 80 }
+      const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
       let totalValue = 0
       let totalAllocated = 0
 
@@ -251,7 +251,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (allocatedAmount > 0 && initialPrices[asset.id]) {
         const priceChange = (asset.price - initialPrices[asset.id]!) / initialPrices[asset.id]!
-        const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, OIL: 80 }
+        const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
         const amplifiedChange = priceChange * (multipliers[asset.id] || 50)
         const leveragedChange = amplifiedChange * user.leverage
         totalValue += allocatedAmount * (1 + leveragedChange)
@@ -334,7 +334,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   applySellResult: (newBalance: number) => {
     set((state) => ({
-      allocations: { BTC: 0, GOLD: 0, OIL: 0 },
+      allocations: { BTC: 0, GOLD: 0, EUR: 0 },
       initialPrices: createInitialPrices(),
       user: {
         ...state.user,

@@ -10,12 +10,12 @@ export interface IUser extends Document {
   allocations: {
     BTC: number
     GOLD: number
-    OIL: number
+    EUR: number
   }
   initialPrices: {
     BTC: number | null
     GOLD: number | null
-    OIL: number | null
+    EUR: number | null
   }
   leverage: number
   portfolioValue: number
@@ -40,12 +40,12 @@ const UserSchema = new Schema<IUser>(
     allocations: {
       BTC: { type: Number, required: true, default: 0 },
       GOLD: { type: Number, required: true, default: 0 },
-      OIL: { type: Number, required: true, default: 0 },
+      EUR: { type: Number, required: true, default: 0 },
     },
     initialPrices: {
       BTC: { type: Number, default: null },
       GOLD: { type: Number, default: null },
-      OIL: { type: Number, default: null },
+      EUR: { type: Number, default: null },
     },
     leverage: { type: Number, required: true, default: 1 },
     portfolioValue: { type: Number, required: true, default: 100 },

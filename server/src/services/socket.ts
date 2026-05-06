@@ -97,7 +97,7 @@ export function broadcastUserUpdate(
 
 export function broadcastAllocationUpdate(
   telegramId: number,
-  allocations: { BTC: number; GOLD: number; OIL: number },
+  allocations: { BTC: number; GOLD: number; EUR: number },
 ) {
   if (!ioInstance) return
   ioInstance.emit('allocation_update', { telegramId, allocations })
@@ -110,20 +110,20 @@ export function broadcastAllPrices() {
 
 export async function recalcAndBroadcastUser(user: IUser) {
   const prices = latestPrices
-  if (!prices['BTC/USD'] || !prices['XAU/USD'] || !prices['USOIL']) {
+  if (!prices['BTC/USD'] || !prices['XAU/USD'] || !prices['EUR/USD']) {
     return user
   }
 
   const currentPrices: Record<string, number> = {
     BTC: prices['BTC/USD'].price,
     GOLD: prices['XAU/USD'].price,
-    OIL: prices['USOIL'].price,
+    EUR: prices['EUR/USD'].price,
   }
 
   const initialPrices: Record<string, number> = {}
   if (user.initialPrices.BTC) initialPrices.BTC = user.initialPrices.BTC
   if (user.initialPrices.GOLD) initialPrices.GOLD = user.initialPrices.GOLD
-  if (user.initialPrices.OIL) initialPrices.OIL = user.initialPrices.OIL
+  if (user.initialPrices.EUR) initialPrices.EUR = user.initialPrices.EUR
 
   const portfolio = calculatePortfolioValue(
     user.balance,
