@@ -296,16 +296,25 @@ router.get(
         return res.json({ history: mockHistory })
       }
 
-      const history = positions.map((p) => ({
-        id: p._id.toString(),
-        type: p.type,
-        asset: p.asset,
-        amount: p.amount,
-        hlxValue: p.hlxValue,
-        pnl: p.pnl,
-        priceAtTime: p.priceAtTime,
-        createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt,
-      }))
+      // Calculate PnL for each entry - show actual HLX profit/loss
+      const history = positions.map((p) => {
+        const entry: any = {
+          id: p._id.toString(),
+          type: p.type,
+          asset: p.asset,
+          amount: p.amount,
+          hlxValue: p.hlxValue,
+          priceAtTime: p.priceAtTime,
+          createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt,
+        }
+        
+        // For sell entries, use pnl (actual profit/loss in HLX)
+        if (p.type === 'sell') {
+          entry.pnl = p.pnl !== undefined ? p.pnl : 0
+        }
+        
+        return entry
+      })
 
       res.json({ history })
     } catch (error) {

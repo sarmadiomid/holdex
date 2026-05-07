@@ -244,10 +244,6 @@ export function Dashboard() {
         ) : (
           <div className="flex flex-col gap-2">
             {positionHistory.slice(0, 10).map((entry) => {
-              const isBuy = entry.type === 'buy'
-              const isSell = entry.type === 'sell'
-              const isAllocate = entry.type === 'allocate'
-
               return (
                 <div
                   key={entry.id}
@@ -255,32 +251,25 @@ export function Dashboard() {
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={cn(
-                        'size-8 rounded-full flex items-center justify-center',
-                        isBuy
-                          ? 'bg-neon-green/10'
-                          : isSell
-                          ? 'bg-neon-pink/10'
-                          : 'bg-neon-cyan/10'
-                      )}
+                      className={
+                        entry.type === 'sell'
+                          ? 'size-8 rounded-full flex items-center justify-center bg-neon-pink/10'
+                          : entry.type === 'allocate'
+                          ? 'size-8 rounded-full flex items-center justify-center bg-neon-cyan/10'
+                          : 'size-8 rounded-full flex items-center justify-center bg-neon-green/10'
+                      }
                     >
-                      {isBuy ? (
-                        <TrendingUp className="size-4 text-neon-green" />
-                      ) : isSell ? (
+                      {entry.type === 'sell' ? (
                         <TrendingDown className="size-4 text-neon-pink" />
-                      ) : (
+                      ) : entry.type === 'allocate' ? (
                         <Minus className="size-4 text-neon-cyan" />
+                      ) : (
+                        <TrendingUp className="size-4 text-neon-green" />
                       )}
                     </div>
                     <div>
                       <p className="text-sm font-medium">
-                        {isBuy
-                          ? 'Buy'
-                          : isSell
-                          ? 'Sell'
-                          : isAllocate
-                          ? 'Allocate'
-                          : entry.type}
+                        {entry.type === 'sell' ? 'Sell' : entry.type === 'allocate' ? 'Allocate' : entry.type}
                         {entry.asset ? ` ${entry.asset}` : ''}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -294,32 +283,34 @@ export function Dashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p
-                      className={cn(
-                        'text-sm font-mono font-medium',
-                        entry.pnl !== undefined
-                          ? entry.pnl >= 0
-                            ? 'text-neon-green'
-                            : 'text-neon-pink'
-                          : isBuy
-                          ? 'text-neon-green'
-                          : isSell
-                          ? 'text-neon-pink'
-                          : 'text-neon-cyan'
+                    <p className={
+                      entry.pnl !== undefined
+                        ? entry.pnl > 0
+                          ? 'text-sm font-mono font-medium text-neon-green'
+                          : 'text-sm font-mono font-medium text-neon-pink'
+                        : entry.type === 'sell'
+                        ? 'text-sm font-mono font-medium text-neon-pink'
+                        : entry.type === 'allocate'
+                        ? 'text-sm font-mono font-medium text-neon-cyan'
+                        : 'text-sm font-mono font-medium text-muted-foreground'
+                    }>
+                      {entry.type === 'sell' && entry.pnl !== undefined ? (
+                        <>{entry.pnl > 0 ? '+' : ''}{entry.pnl.toFixed(2)} HLX</>
+                      ) : entry.type === 'sell' ? (
+                        <>{entry.hlxValue > 0 ? '-'+Number(entry.hlxValue).toFixed(2) : Number(entry.hlxValue).toFixed(2)} HLX</>
+                      ) : entry.type === 'allocate' ? (
+                        <>{Number(entry.hlxValue).toFixed(2)} HLX</>
+                      ) : entry.type === 'store_purchase' ? (
+                        <>-{Number(entry.hlxValue).toFixed(2)} HLX</>
+                      ) : (
+                        <>{Number(entry.hlxValue).toFixed(2)} HLX</>
                       )}
-                    >
-                      {entry.pnl !== undefined
-                        ? entry.pnl >= 0
-                          ? `+${entry.pnl.toFixed(2)}`
-                          : entry.pnl.toFixed(2)
-                        : isSell
-                        ? '-'
-                        : '+'}
-                      {entry.pnl === undefined && `${entry.amount}%`}
-                      {' HLX'}
                     </p>
                     <p className="text-xs text-muted-foreground font-mono">
-                      {entry.hlxValue.toFixed(2)} HLX
+                      {entry.type === 'allocate' && 'Allocated'}
+                      {entry.type === 'sell' && (entry.pnl !== undefined ? (entry.pnl > 0 ? '+Profit' : 'Loss') : 'Received')}
+                      {entry.type === 'store_purchase' && 'Spent'}
+                      {entry.type === 'buy' && 'Bought'}
                     </p>
                   </div>
                 </div>
