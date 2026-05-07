@@ -24,6 +24,9 @@ export function Profile({ onClose }: ProfileProps) {
   const [referralStats, setReferralStats] = useState<{
     referralCount: number
     totalEarned: number
+    inviteProgress: number
+    inviteRequired: number
+    inviteTaskCompleted: boolean
   } | null>(null)
 
   const referralLink = `https://t.me/holdextest_bot/holdex?startapp=${user.telegramId}`
@@ -146,59 +149,100 @@ export function Profile({ onClose }: ProfileProps) {
             ))}
           </motion.div>
 
-          {/* Referral Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <GlassCard className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Users className="size-5 text-neon-cyan" />
-                  <h3 className="font-semibold text-foreground">Invite Friends</h3>
-                </div>
-                {referralStats && (
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Referred</p>
-                    <p className="text-lg font-bold text-neon-cyan">{referralStats.referralCount}</p>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                Earn <span className="text-neon-gold font-bold">10 HLX</span> for each friend who joins with your link
-              </p>
-              {referralStats && referralStats.totalEarned > 0 && (
-                <div className="mb-4 px-3 py-2 rounded-lg bg-neon-gold/10 border border-neon-gold/30">
-                  <p className="text-sm text-neon-gold font-medium">
-                    Total earned: <span className="font-bold">{referralStats.totalEarned} HLX</span>
-                  </p>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <div className="flex-1 px-3 py-2 rounded-lg bg-muted/40 border border-border/40 text-sm font-mono text-foreground truncate">
-                  {referralLink}
-                </div>
-                <Button
-                  onClick={handleCopyReferral}
-                  className="flex-shrink-0"
-                  variant={copied ? 'default' : 'outline'}
-                >
-                  {copied ? (
-                    <>
-                      <Check className="size-4 mr-2" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="size-4 mr-2" />
-                      Copy
-                    </>
-                  )}
-                </Button>
-              </div>
-            </GlassCard>
-          </motion.div>
+           {/* Referral Section */}
+           <motion.div
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: 0.2 }}
+           >
+             <GlassCard className="p-5">
+               <div className="flex items-center justify-between mb-3">
+                 <div className="flex items-center gap-2">
+                   <Users className="size-5 text-neon-cyan" />
+                   <h3 className="font-semibold text-foreground">Invite Friends</h3>
+                 </div>
+                 {referralStats && (
+                   <div className="text-right">
+                     <p className="text-xs text-muted-foreground">Referred</p>
+                     <p className="text-lg font-bold text-neon-cyan">{referralStats.referralCount}</p>
+                   </div>
+                 )}
+               </div>
+               <p className="text-sm text-muted-foreground mb-2">
+                 Earn <span className="text-neon-gold font-bold">10 HLX</span> for each friend who joins with your link
+               </p>
+               {referralStats && referralStats.totalEarned > 0 && (
+                 <div className="mb-4 px-3 py-2 rounded-lg bg-neon-gold/10 border border-neon-gold/30">
+                   <p className="text-sm text-neon-gold font-medium">
+                     Total earned: <span className="font-bold">{referralStats.totalEarned} HLX</span>
+                   </p>
+                 </div>
+               )}
+
+               {/* Invite Task Progress */}
+               {referralStats && (
+                 <div className={cn(
+                   "mb-4 p-3 rounded-lg border",
+                   referralStats.inviteTaskCompleted
+                     ? "bg-neon-cyan/10 border-neon-cyan/30"
+                     : "bg-muted/40 border-border/40"
+                 )}>
+                   <div className="flex items-center justify-between mb-2">
+                     <p className="text-sm font-medium text-foreground">Invite 5 Friends Task</p>
+                     {referralStats.inviteTaskCompleted ? (
+                       <span className="text-xs text-neon-cyan font-bold">Completed</span>
+                     ) : (
+                       <span className="text-xs text-muted-foreground">
+                         {referralStats.inviteProgress}/{referralStats.inviteRequired}
+                       </span>
+                     )}
+                   </div>
+                   <div className="w-full h-2 rounded-full bg-background/50 overflow-hidden">
+                     <div
+                       className={cn(
+                         "h-full rounded-full transition-all duration-500",
+                         referralStats.inviteTaskCompleted ? "bg-neon-cyan w-full" : "bg-neon-gold",
+                       )}
+                       style={{ width: `${referralStats.inviteTaskCompleted ? 100 : (referralStats.inviteProgress / referralStats.inviteRequired) * 100}%` }}
+                     />
+                   </div>
+                   {!referralStats.inviteTaskCompleted && (
+                     <p className="text-xs text-muted-foreground mt-2">
+                       Earn <span className="text-neon-gold font-bold">2500 HLX</span> when completed
+                     </p>
+                   )}
+                   {referralStats.inviteTaskCompleted && (
+                     <p className="text-xs text-neon-cyan mt-2 font-medium">
+                       +2500 HLX has been added to your balance
+                     </p>
+                   )}
+                 </div>
+               )}
+
+               <div className="flex gap-2">
+                 <div className="flex-1 px-3 py-2 rounded-lg bg-muted/40 border border-border/40 text-sm font-mono text-foreground truncate">
+                   {referralLink}
+                 </div>
+                 <Button
+                   onClick={handleCopyReferral}
+                   className="flex-shrink-0"
+                   variant={copied ? 'default' : 'outline'}
+                 >
+                   {copied ? (
+                     <>
+                       <Check className="size-4 mr-2" />
+                       Copied
+                     </>
+                   ) : (
+                     <>
+                       <Copy className="size-4 mr-2" />
+                       Copy
+                     </>
+                   )}
+                 </Button>
+               </div>
+             </GlassCard>
+           </motion.div>
 
           {/* Performance */}
           <motion.div

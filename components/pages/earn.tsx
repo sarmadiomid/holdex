@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ExternalLink, CheckCircle, Loader2, Coins, Gift } from 'lucide-react'
+import { ExternalLink, CheckCircle, Loader2, Coins, Gift, Copy, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/ui/glass-card'
 import { NeonText } from '@/components/ui/neon-text'
@@ -17,26 +17,68 @@ export function EarnPage() {
   const earnTasks = useAppStore((state) => state.earnTasks)
   const completeTask = useAppStore((state) => state.completeTask)
   const token = useAppStore((state) => state.token)
+  const user = useAppStore((state) => state.user)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [referralStats, setReferralStats] = useState<{
+    referralCount: number
+    inviteProgress: number
+    inviteRequired: number
+    inviteTaskCompleted: boolean
+  } | null>(null)
 
   const completedCount = earnTasks.filter((t) => t.completed).length
   const totalRewards = earnTasks.reduce((sum, t) => sum + (t.completed ? t.reward : 0), 0)
   const availableRewards = earnTasks.reduce((sum, t) => sum + (!t.completed ? t.reward : 0), 0)
 
+  const referralLink = `https://t.me/holdextest_bot/holdex?startapp=${user.telegramId}`
+
+  useEffect(() => {
+    if (!token) return
+    const fetchReferralStats = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/referral/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setReferralStats(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch referral stats:', error)
+      }
+    }
+    fetchReferralStats()
+  }, [token])
+
+  const handleCopyReferral = () => {
+    navigator.clipboard.writeText(referralLink)
+    setCopied(true)
+    haptic.notification('success')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleForwardToTelegram = () => {
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Join Holdex and start earning HLX tokens!')}`
+    if (webApp) {
+      webApp.openTelegramLink(shareUrl)
+    } else {
+      window.open(shareUrl, '_blank')
+    }
+    haptic.impact('light')
+  }
+
   const handleTaskClick = async (task: typeof earnTasks[0]) => {
-    if (task.completed || processingId) return
-    
+    if (task.completed || processingId || task.type === 'invite') return
+
     haptic.impact('medium')
     setProcessingId(task.id)
 
-    // Open URL if exists
     if (task.url) {
       if (webApp) {
-        // Use openTelegramLink for Telegram links (channels, groups, bots)
         if (task.url.includes('t.me/')) {
           webApp.openTelegramLink(task.url)
         } else {
-          // Use openLink for external links (Twitter, Instagram, YouTube, etc.)
           webApp.openLink(task.url)
         }
       } else {
@@ -44,7 +86,6 @@ export function EarnPage() {
       }
     }
 
-    // Simulate verification delay
     setTimeout(async () => {
       try {
         if (token) {
@@ -58,7 +99,6 @@ export function EarnPage() {
           })
 
           if (res.ok) {
-            const data = await res.json()
             completeTask(task.id)
             haptic.notification('success')
           } else {
@@ -67,7 +107,6 @@ export function EarnPage() {
             alert(error.message || error.error || 'Failed to complete task')
           }
         } else {
-          // Fallback for non-authenticated users
           completeTask(task.id)
           haptic.notification('success')
         }
@@ -134,9 +173,10 @@ export function EarnPage() {
               className={cn(
                 'p-4 transition-all',
                 task.completed && 'opacity-60',
-                !task.completed && 'hover:border-neon-cyan/50 cursor-pointer'
+                !task.completed && task.type !== 'invite' && 'hover:border-neon-cyan/50 cursor-pointer',
+                task.type === 'invite' && 'border-neon-cyan/30'
               )}
-              onClick={() => !task.completed && handleTaskClick(task)}
+              onClick={() => !task.completed && task.type !== 'invite' && handleTaskClick(task)}
             >
               <div className="flex items-start gap-4">
                 <div className="size-12 rounded-xl bg-gradient-to-br from-neon-cyan/20 to-neon-pink/20 flex items-center justify-center text-2xl flex-shrink-0">
@@ -146,13 +186,40 @@ export function EarnPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground mb-1">{task.title}</h3>
                   <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
-                  
-                  <div className="flex items-center gap-2">
+
+                  {task.type === 'invite' && referralStats && (
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-muted-foreground">
+                          Progress: {referralStats.inviteProgress}/{referralStats.inviteRequired}
+                        </span>
+                        {referralStats.inviteTaskCompleted && (
+                          <span className="text-xs text-neon-cyan font-bold">Completed</span>
+                        )}
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-background/50 overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            referralStats.inviteTaskCompleted ? "bg-neon-cyan w-full" : "bg-neon-gold"
+                          )}
+                          style={{
+                            width: `${referralStats.inviteTaskCompleted
+                              ? 100
+                              : (referralStats.inviteProgress / referralStats.inviteRequired) * 100
+                            }%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-neon-gold/20 border border-neon-gold/40">
                       <Coins className="size-3 text-neon-gold" />
                       <span className="text-xs font-bold text-neon-gold">+{task.reward.toLocaleString()}</span>
                     </div>
-                    
+
                     {task.type === 'follow' && (
                       <span className="text-xs text-muted-foreground">Follow</span>
                     )}
@@ -171,8 +238,44 @@ export function EarnPage() {
                   </div>
                 </div>
 
-                <div className="flex-shrink-0">
-                  {task.completed ? (
+                <div className="flex-shrink-0 flex flex-col gap-2">
+                  {task.type === 'invite' ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleForwardToTelegram()
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        <Share2 className="size-3" />
+                        Forward
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCopyReferral()
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="size-3" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-3" />
+                            Copy Link
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  ) : task.completed ? (
                     <div className="size-10 rounded-full bg-neon-cyan/20 flex items-center justify-center">
                       <CheckCircle className="size-5 text-neon-cyan" />
                     </div>

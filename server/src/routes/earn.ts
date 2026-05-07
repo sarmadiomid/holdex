@@ -39,6 +39,13 @@ router.post(
       const { telegramId } = req
       const { taskId } = req.body as { taskId: string }
 
+      // Block manual completion of invite-5 task
+      if (taskId === 'invite-5') {
+        return res.status(400).json({
+          error: 'This task is completed automatically when you invite 5 friends'
+        })
+      }
+
       const reward = TASK_REWARDS[taskId]
       if (!reward) {
         return res.status(400).json({ error: 'Invalid task' })
@@ -59,7 +66,7 @@ router.post(
       if (channelId) {
         const isMember = await checkChannelMembership(telegramId!, channelId)
         if (!isMember) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: 'Channel membership verification failed',
             message: 'Please join the channel first and try again'
           })

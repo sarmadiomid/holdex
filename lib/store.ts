@@ -138,12 +138,20 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setToken: (token) => set({ token }),
 
-  setAuthenticatedUser: (userData: any, token) => set({
-    user: userData,
-    token,
-    isAuthenticated: true,
-    allocations: userData.allocations || { BTC: 0, GOLD: 0, EUR: 0 },
-    initialPrices: userData.initialPrices || createInitialPrices(),
+  setAuthenticatedUser: (userData: any, token) => set((state) => {
+    const completedTasks = userData.completedTasks || []
+    const updatedEarnTasks = state.earnTasks.map(task => ({
+      ...task,
+      completed: completedTasks.includes(task.id)
+    }))
+    return {
+      user: userData,
+      token,
+      isAuthenticated: true,
+      earnTasks: updatedEarnTasks,
+      allocations: userData.allocations || { BTC: 0, GOLD: 0, EUR: 0 },
+      initialPrices: userData.initialPrices || createInitialPrices(),
+    }
   }),
 
   updateAssetPrice: (twelveDataSymbol, price) => {

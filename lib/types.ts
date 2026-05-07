@@ -26,6 +26,7 @@ export interface User {
   totalPnlPercent: number
   leverage: number // 1x, 2x, 5x, 10x
   rank?: number
+  completedTasks?: string[]
 }
 
 // Leaderboard entry

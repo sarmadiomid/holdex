@@ -76,7 +76,7 @@ router.post(
 
       // Process referral only for new users
       if (isNewUser && referrerId) {
-        await processReferral(user, referrerId)
+        const { inviteTaskCompleted, newBalance } = await processReferral(user, referrerId)
         // Reload user to get updated balance if they were referred
         user = await User.findById(user._id)
       }
@@ -103,6 +103,7 @@ router.post(
           portfolioValue: user.portfolioValue,
           totalPnl: user.totalPnl,
           totalPnlPercent: user.totalPnlPercent,
+          completedTasks: user.completedTasks || [],
         },
       })
     } catch (error) {
