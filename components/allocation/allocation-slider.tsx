@@ -19,14 +19,20 @@ const assetIcons: Record<string, string> = {
   EUR: '€'
 }
 
+const LEVERAGE_OPTIONS = [1, 2, 5, 10]
+
 export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps) {
   const { haptic } = useTelegram()
   const allocations = useAppStore((state) => state.allocations)
   const setAllocations = useAppStore((state) => state.setAllocations)
   const user = useAppStore((state) => state.user)
+  const setAssetLeverage = useAppStore((state) => state.setAssetLeverage)
 
   const currentAllocation = allocations[asset.id] || 0
   const allocatedValue = (user.balance * currentAllocation) / 100
+  const assetLeverages = user.assetLeverages || { BTC: 1, GOLD: 1, EUR: 1 }
+  const currentLeverage = assetLeverages[asset.id] || user.leverage || 1
+  const hasAllocation = currentAllocation > 0
 
   const colorMap = {
     'neon-gold': {
@@ -70,6 +76,11 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
     setSingleAllocation(asset.id, value[0])
   }, [haptic, setSingleAllocation, asset.id])
 
+  const handleLeverageChange = useCallback((lev: number) => {
+    haptic.impact('light')
+    setAssetLeverage(asset.id, lev)
+  }, [haptic, setAssetLeverage, asset.id])
+
   return (
     <motion.div
       className="glass rounded-xl p-4"
@@ -90,7 +101,7 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
           <div>
             <h3 className="font-semibold text-foreground">{asset.name}</h3>
             <p className="text-sm text-muted-foreground">
-              ${asset.price.toLocaleString(undefined, { 
+              ${asset.price.toLocaleString(undefined, {
                 minimumFractionDigits: asset.id === 'EUR' ? 4 : 2,
                 maximumFractionDigits: asset.id === 'EUR' ? 4 : 2
               })}
@@ -146,6 +157,35 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
             )
           })}
         </div>
+
+        {hasAllocation && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="pt-2 border-t border-glass-border"
+          >
+            <p className="text-xs text-muted-foreground mb-2">Leverage</p>
+            <div className="flex items-center gap-2">
+              {LEVERAGE_OPTIONS.map((lev) => {
+                const isActive = currentLeverage === lev
+                return (
+                  <motion.button
+                    key={lev}
+                    onClick={() => handleLeverageChange(lev)}
+                    className={cn(
+                      'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
+                      isActive ? cn(colors.bg, colors.text, 'border', colors.border) :
+                      'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+                    )}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {lev}x
+                  </motion.button>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   )

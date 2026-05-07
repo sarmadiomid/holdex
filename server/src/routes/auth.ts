@@ -100,6 +100,7 @@ router.post(
           allocations: user.allocations,
           initialPrices: user.initialPrices,
           leverage: user.leverage,
+          assetLeverages: user.assetLeverages || { BTC: 1, GOLD: 1, EUR: 1 },
           portfolioValue: user.portfolioValue,
           totalPnl: user.totalPnl,
           totalPnlPercent: user.totalPnlPercent,

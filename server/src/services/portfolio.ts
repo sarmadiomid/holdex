@@ -22,6 +22,7 @@ export function calculatePortfolioValue(
   initialPrices: Record<string, number>,
   currentPrices: Record<string, number>,
   leverage: number,
+  assetLeverages?: Record<string, number>,
 ): PortfolioResult {
   let totalValue = 0
 
@@ -41,7 +42,8 @@ export function calculatePortfolioValue(
     const priceChange = (currentPrice - initialPrice) / initialPrice
     const multiplier = VOLATILITY_MULTIPLIER[asset] || 1
     const amplifiedChange = priceChange * multiplier
-    const leveragedChange = amplifiedChange * leverage
+    const assetLeverage = assetLeverages?.[asset] ?? leverage
+    const leveragedChange = amplifiedChange * assetLeverage
     const assetValue = allocatedAmount * (1 + leveragedChange)
     totalValue += assetValue
   }

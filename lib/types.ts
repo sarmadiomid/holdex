@@ -24,7 +24,8 @@ export interface User {
   portfolioValue: number
   totalPnl: number
   totalPnlPercent: number
-  leverage: number // 1x, 2x, 5x, 10x
+  leverage: number // 1x, 2x, 5x, 10x (global default)
+  assetLeverages?: Record<AssetType, number> // Per-asset leverage
   rank?: number
   completedTasks?: string[]
 }

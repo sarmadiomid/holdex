@@ -17,6 +17,11 @@ const allocationSchema = z.object({
   EUR: z.number().min(0).max(100).default(0),
 })
 
+const assetLeverageSchema = z.object({
+  asset: z.enum(['BTC', 'GOLD', 'EUR']),
+  leverage: z.number().min(1).max(10),
+})
+
 router.post(
   '/allocation',
   authMiddleware,
@@ -111,6 +116,7 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
 
     const prices = getLatestPrices()
     const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
+    const assetLeverages = user.assetLeverages || { BTC: user.leverage, GOLD: user.leverage, EUR: user.leverage }
     let totalValue = 0
     const soldPositions: { asset: string; allocation: number; pnl: number }[] = []
 
@@ -126,7 +132,8 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
         if (initialPrice && currentPrice && initialPrice > 0) {
           const priceChange = (currentPrice - initialPrice) / initialPrice
           const multiplier = multipliers[asset]
-          const leveragedChange = priceChange * multiplier * user.leverage
+          const assetLeverage = assetLeverages[asset] || user.leverage
+          const leveragedChange = priceChange * multiplier * assetLeverage
           assetPnl = allocatedAmount * leveragedChange
           totalValue += allocatedAmount * (1 + leveragedChange)
         } else {
@@ -181,5 +188,43 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
     res.status(500).json({ error: 'Failed to sell holdings' })
   }
 })
+
+router.post(
+  '/asset-leverage',
+  authMiddleware,
+  validate(assetLeverageSchema),
+  async (req: AuthRequest, res) => {
+    try {
+      const { telegramId } = req
+      const { asset, leverage } = req.body as { asset: 'BTC' | 'GOLD' | 'EUR'; leverage: number }
+
+      const user = await User.findOne({ telegramId })
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' })
+      }
+
+      if (!user.assetLeverages) {
+        user.assetLeverages = { BTC: 1, GOLD: 1, EUR: 1 }
+      }
+
+      user.assetLeverages[asset] = leverage
+      await user.save()
+
+      broadcastUserUpdate(user.telegramId, {
+        assetLeverages: user.assetLeverages,
+      })
+
+      logger.info(`Asset leverage updated for user ${telegramId}: ${asset} = ${leverage}x`)
+
+      res.json({
+        success: true,
+        assetLeverages: user.assetLeverages,
+      })
+    } catch (error) {
+      logger.error('Asset leverage error', { error })
+      res.status(500).json({ error: 'Failed to update asset leverage' })
+    }
+  },
+)
 
 export default router

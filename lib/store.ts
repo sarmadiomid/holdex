@@ -76,6 +76,7 @@ interface AppState {
     } | null
   }) => void
   setLeverage: (leverage: number) => void
+  setAssetLeverage: (assetId: AssetType, leverage: number) => void
   addBalance: (amount: number) => void
   applySellResult: (newBalance: number) => void
 }
@@ -103,6 +104,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     totalPnl: 0,
     totalPnlPercent: 0,
     leverage: 1,
+    assetLeverages: { BTC: 1, GOLD: 1, EUR: 1 },
   },
   isAuthenticated: false,
   token: null,
@@ -145,7 +147,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       completed: completedTasks.includes(task.id)
     }))
     return {
-      user: userData,
+      user: {
+        ...userData,
+        assetLeverages: userData.assetLeverages || { BTC: 1, GOLD: 1, EUR: 1 },
+      },
       token,
       isAuthenticated: true,
       earnTasks: updatedEarnTasks,
@@ -171,24 +176,26 @@ export const useAppStore = create<AppState>((set, get) => ({
         change24h: Math.round(change24h * 100) / 100,
       }
 
-      // Recalculate portfolio client-side with per-asset multipliers
-      const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
-      let totalValue = 0
-      let totalAllocated = 0
+       // Recalculate portfolio client-side with per-asset multipliers
+       const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
+       const assetLeverages = state.user.assetLeverages || { BTC: state.user.leverage, GOLD: state.user.leverage, EUR: state.user.leverage }
+       let totalValue = 0
+       let totalAllocated = 0
 
-      for (const asset of updatedAssets) {
-        const allocation = state.allocations[asset.id] || 0
-        const allocatedAmount = (state.user.balance * allocation) / 100
-        totalAllocated += allocation
+       for (const asset of updatedAssets) {
+         const allocation = state.allocations[asset.id] || 0
+         const allocatedAmount = (state.user.balance * allocation) / 100
+         totalAllocated += allocation
 
-        if (allocatedAmount > 0 && state.initialPrices[asset.id]) {
-          const priceChange = (asset.price - state.initialPrices[asset.id]!) / state.initialPrices[asset.id]!
-          const mult = multipliers[asset.id] || 1
-          const amplifiedChange = priceChange * mult
-          const leveragedChange = amplifiedChange * state.user.leverage
-          totalValue += allocatedAmount * (1 + leveragedChange)
-        }
-      }
+         if (allocatedAmount > 0 && state.initialPrices[asset.id]) {
+           const priceChange = (asset.price - state.initialPrices[asset.id]!) / state.initialPrices[asset.id]!
+           const mult = multipliers[asset.id] || 1
+           const amplifiedChange = priceChange * mult
+           const assetLeverage = assetLeverages[asset.id] || state.user.leverage
+           const leveragedChange = amplifiedChange * assetLeverage
+           totalValue += allocatedAmount * (1 + leveragedChange)
+         }
+       }
 
       const unallocatedPercent = 100 - totalAllocated
       totalValue += (state.user.balance * unallocatedPercent) / 100
@@ -249,6 +256,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   updatePortfolioValue: () => {
     const { assets, allocations, initialPrices, user } = get()
+    const assetLeverages = user.assetLeverages || { BTC: user.leverage, GOLD: user.leverage, EUR: user.leverage }
     let totalValue = 0
     let totalAllocated = 0
 
@@ -261,7 +269,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         const priceChange = (asset.price - initialPrices[asset.id]!) / initialPrices[asset.id]!
         const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
         const amplifiedChange = priceChange * (multipliers[asset.id] || 50)
-        const leveragedChange = amplifiedChange * user.leverage
+        const assetLeverage = assetLeverages[asset.id] || user.leverage
+        const leveragedChange = amplifiedChange * assetLeverage
         totalValue += allocatedAmount * (1 + leveragedChange)
       }
     }
@@ -328,6 +337,32 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setLeverage: (leverage) => {
     set((state) => ({ user: { ...state.user, leverage } }))
+  },
+
+  setAssetLeverage: (assetId, leverage) => {
+    const token = get().token
+    // Optimistic update
+    set((state) => {
+      const assetLeverages = state.user.assetLeverages || { BTC: 1, GOLD: 1, EUR: 1 }
+      return {
+        user: {
+          ...state.user,
+          assetLeverages: { ...assetLeverages, [assetId]: leverage }
+        }
+      }
+    })
+    // Sync with backend
+    if (token) {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+      fetch(`${BACKEND_URL}/api/allocation/asset-leverage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ asset: assetId, leverage }),
+      }).catch(err => console.error('Failed to update asset leverage:', err))
+    }
   },
 
   addBalance: (amount) => {

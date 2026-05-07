@@ -41,6 +41,7 @@ export function useSocket({ token, enabled }: UseSocketOptions) {
       portfolioValue?: number
       totalPnl?: number
       totalPnlPercent?: number
+      assetLeverages?: Record<string, number>
     }) => {
       updateUserFromSocket(data)
     })

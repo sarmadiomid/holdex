@@ -18,6 +18,11 @@ export interface IUser extends Document {
     EUR: number | null
   }
   leverage: number
+  assetLeverages?: {
+    BTC: number
+    GOLD: number
+    EUR: number
+  }
   portfolioValue: number
   totalPnl: number
   totalPnlPercent: number
@@ -48,6 +53,11 @@ const UserSchema = new Schema<IUser>(
       EUR: { type: Number, default: null },
     },
     leverage: { type: Number, required: true, default: 1 },
+    assetLeverages: {
+      BTC: { type: Number, default: 1 },
+      GOLD: { type: Number, default: 1 },
+      EUR: { type: Number, default: 1 },
+    },
     portfolioValue: { type: Number, required: true, default: 100 },
     totalPnl: { type: Number, required: true, default: 0 },
     totalPnlPercent: { type: Number, required: true, default: 0 },

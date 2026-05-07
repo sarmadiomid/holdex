@@ -238,42 +238,31 @@ export function EarnPage() {
                   </div>
                 </div>
 
-                <div className="flex-shrink-0 flex flex-col gap-2">
+                <div className="flex-shrink-0 flex gap-2">
                   {task.type === 'invite' ? (
                     <>
-                      <Button
-                        size="sm"
-                        variant="outline"
+                      <div
+                        className="size-10 rounded-full bg-muted/40 flex items-center justify-center cursor-pointer hover:border-neon-cyan/50 border border-transparent transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleForwardToTelegram()
                         }}
-                        className="flex items-center gap-1"
                       >
-                        <Share2 className="size-3" />
-                        Forward
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
+                        <Share2 className="size-5 text-muted-foreground" />
+                      </div>
+                      <div
+                        className="size-10 rounded-full bg-muted/40 flex items-center justify-center cursor-pointer hover:border-neon-cyan/50 border border-transparent transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleCopyReferral()
                         }}
-                        className="flex items-center gap-1"
                       >
                         {copied ? (
-                          <>
-                            <Check className="size-3" />
-                            Copied
-                          </>
+                          <Check className="size-5 text-neon-cyan" />
                         ) : (
-                          <>
-                            <Copy className="size-3" />
-                            Copy Link
-                          </>
+                          <Copy className="size-5 text-muted-foreground" />
                         )}
-                      </Button>
+                      </div>
                     </>
                   ) : task.completed ? (
                     <div className="size-10 rounded-full bg-neon-cyan/20 flex items-center justify-center">

@@ -131,6 +131,7 @@ export async function recalcAndBroadcastUser(user: IUser) {
     initialPrices,
     currentPrices,
     user.leverage,
+    user.assetLeverages || undefined,
   )
 
   const updated = await User.findByIdAndUpdate(
