@@ -6,6 +6,7 @@ export interface IPosition extends Document {
   asset?: 'BTC' | 'GOLD' | 'EUR'
   amount: number
   hlxValue: number
+  pnl?: number
   priceAtTime?: number
   createdAt: Date
 }
@@ -21,6 +22,7 @@ const PositionSchema = new Schema<IPosition>(
     asset: { type: String, enum: ['BTC', 'GOLD', 'EUR'] },
     amount: { type: Number, required: true },
     hlxValue: { type: Number, required: true },
+    pnl: { type: Number },
     priceAtTime: { type: Number },
   },
   { timestamps: true },

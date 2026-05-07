@@ -157,6 +157,7 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
           asset,
           amount: alloc,
           hlxValue: allocatedAmount + assetPnl,
+          pnl: assetPnl,
           priceAtTime: currentPrice,
         })
       }
@@ -273,19 +274,21 @@ router.get(
         const mockHistory = [
           {
             id: 'mock-1',
-            type: 'allocate',
+            type: 'sell',
             asset: 'BTC',
             amount: 30,
-            hlxValue: 30,
+            hlxValue: 45,
+            pnl: 15,
             priceAtTime: 50000,
             createdAt: new Date().toISOString(),
           },
           {
             id: 'mock-2',
-            type: 'allocate',
+            type: 'sell',
             asset: 'GOLD',
             amount: 20,
-            hlxValue: 20,
+            hlxValue: 15,
+            pnl: -5,
             priceAtTime: 2000,
             createdAt: new Date(Date.now() - 86400000).toISOString(),
           },
@@ -299,6 +302,7 @@ router.get(
         asset: p.asset,
         amount: p.amount,
         hlxValue: p.hlxValue,
+        pnl: p.pnl,
         priceAtTime: p.priceAtTime,
         createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt,
       }))

@@ -297,15 +297,26 @@ export function Dashboard() {
                     <p
                       className={cn(
                         'text-sm font-mono font-medium',
-                        isBuy
+                        entry.pnl !== undefined
+                          ? entry.pnl >= 0
+                            ? 'text-neon-green'
+                            : 'text-neon-pink'
+                          : isBuy
                           ? 'text-neon-green'
                           : isSell
                           ? 'text-neon-pink'
                           : 'text-neon-cyan'
                       )}
                     >
-                      {isSell ? '-' : '+'}
-                      {entry.amount}%
+                      {entry.pnl !== undefined
+                        ? entry.pnl >= 0
+                          ? `+${entry.pnl.toFixed(2)}`
+                          : entry.pnl.toFixed(2)
+                        : isSell
+                        ? '-'
+                        : '+'}
+                      {entry.pnl === undefined && `${entry.amount}%`}
+                      {' HLX'}
                     </p>
                     <p className="text-xs text-muted-foreground font-mono">
                       {entry.hlxValue.toFixed(2)} HLX

@@ -139,6 +139,7 @@ export interface PositionHistoryEntry {
   asset?: AssetType
   amount: number
   hlxValue: number
+  pnl?: number
   priceAtTime?: number
   createdAt: string
 }
