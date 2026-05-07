@@ -23,21 +23,28 @@ export function Dashboard() {
   const [selling, setSelling] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [sellError, setSellError] = useState<string | null>(null)
+  const [loadingHistory, setLoadingHistory] = useState(true)
 
   useEffect(() => {
     if (!token) return
 
     const fetchPositionHistory = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/allocation/position-history`, {
+        setLoadingHistory(true)
+        const res = await fetch(`${BACKEND_URL}/api/position-history`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.ok) {
           const data = await res.json()
+          console.log('Position history API response:', data)
           setPositionHistory(data.history || [])
+        } else {
+          console.error('Position history API error:', res.status, await res.text())
         }
       } catch (err) {
         console.error('Failed to fetch position history:', err)
+      } finally {
+        setLoadingHistory(false)
       }
     }
 
@@ -223,7 +230,11 @@ export function Dashboard() {
           <h2 className="text-sm font-medium text-muted-foreground">Position History</h2>
         </div>
 
-        {positionHistory.length === 0 ? (
+        {loadingHistory ? (
+          <div className="glass rounded-xl p-6 text-center">
+            <p className="text-sm text-muted-foreground">Loading history...</p>
+          </div>
+        ) : positionHistory.length === 0 ? (
           <div className="glass rounded-xl p-6 text-center">
             <p className="text-sm text-muted-foreground">No position history yet</p>
             <p className="text-xs text-muted-foreground/60 mt-1">
