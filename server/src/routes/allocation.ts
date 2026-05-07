@@ -297,7 +297,7 @@ router.get(
       }
 
       // Calculate PnL for each entry - show actual HLX profit/loss
-      const history = positions.map((p) => {
+      const history = positions.map((p, idx) => {
         const entry: any = {
           id: p._id.toString(),
           type: p.type,
@@ -308,9 +308,23 @@ router.get(
           createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt,
         }
         
-        // For sell entries, use pnl (actual profit/loss in HLX)
+        // For sell entries, calculate pnl from hlxValue difference
         if (p.type === 'sell') {
-          entry.pnl = p.pnl !== undefined ? p.pnl : 0
+          if (p.pnl !== undefined) {
+            entry.pnl = p.pnl
+          } else {
+            // For old records without pnl, find corresponding allocate to get original allocation
+            let originalAlloc = 0
+            // Look ahead in the array (older entries)
+            for (let i = idx + 1; i < positions.length; i++) {
+              if (positions[i].type === 'allocate' && positions[i].asset === p.asset) {
+                originalAlloc = positions[i].hlxValue
+                break
+              }
+            }
+            // pnl = received - original allocation
+            entry.pnl = p.hlxValue - originalAlloc
+          }
         }
         
         return entry

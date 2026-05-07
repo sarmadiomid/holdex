@@ -74,6 +74,15 @@ export function Dashboard() {
       const data = await res.json()
       applySellResult(data.newBalance)
       setShowConfirm(false)
+      
+      // Refresh position history after selling
+      const historyRes = await fetch(`${BACKEND_URL}/api/position-history`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (historyRes.ok) {
+        const historyData = await historyRes.json()
+        setPositionHistory(historyData.history || [])
+      }
     } catch {
       setSellError('Network error. Please try again.')
     } finally {
@@ -294,21 +303,28 @@ export function Dashboard() {
                         ? 'text-sm font-mono font-medium text-neon-cyan'
                         : 'text-sm font-mono font-medium text-muted-foreground'
                     }>
-                      {entry.type === 'sell' && entry.pnl !== undefined ? (
-                        <>{entry.pnl > 0 ? '+' : ''}{entry.pnl.toFixed(2)} HLX</>
-                      ) : entry.type === 'sell' ? (
-                        <>{entry.hlxValue > 0 ? '-'+Number(entry.hlxValue).toFixed(2) : Number(entry.hlxValue).toFixed(2)} HLX</>
+                      {entry.type === 'sell' ? (
+                        entry.pnl !== undefined && Math.abs(entry.pnl) > 0.01 ? (
+                          <>{entry.pnl > 0 ? '+' : ''}{entry.pnl.toFixed(2)} HLX</>
+                        ) : (
+                          <>-{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
+                        )
                       ) : entry.type === 'allocate' ? (
-                        <>{Number(entry.hlxValue).toFixed(2)} HLX</>
+                        <>{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
                       ) : entry.type === 'store_purchase' ? (
-                        <>-{Number(entry.hlxValue).toFixed(2)} HLX</>
+                        <>-{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
                       ) : (
-                        <>{Number(entry.hlxValue).toFixed(2)} HLX</>
+                        <>{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground font-mono">
                       {entry.type === 'allocate' && 'Allocated'}
-                      {entry.type === 'sell' && (entry.pnl !== undefined ? (entry.pnl > 0 ? '+Profit' : 'Loss') : 'Received')}
+                      {entry.type === 'sell' && (
+                        entry.pnl !== undefined && Math.abs(entry.pnl) > 0.01
+                          ? entry.pnl > 0 ? '+Profit' : 'Loss'
+                          : 'Break-even'
+                      )}
+                      {entry.type === 'sell' && (entry.pnl === undefined || Math.abs(entry.pnl) <= 0.01) && 'Received'}
                       {entry.type === 'store_purchase' && 'Spent'}
                       {entry.type === 'buy' && 'Bought'}
                     </p>
