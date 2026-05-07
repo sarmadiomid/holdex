@@ -237,4 +237,39 @@ router.post(
   },
 )
 
+router.get(
+  '/position-history',
+  authMiddleware,
+  async (req: AuthRequest, res) => {
+    try {
+      const { telegramId } = req
+
+      const user = await User.findOne({ telegramId })
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' })
+      }
+
+      const positions = await Position.find({ userId: user._id })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean()
+
+      const history = positions.map((p) => ({
+        id: p._id,
+        type: p.type,
+        asset: p.asset,
+        amount: p.amount,
+        hlxValue: p.hlxValue,
+        priceAtTime: p.priceAtTime,
+        createdAt: p.createdAt,
+      }))
+
+      res.json({ history })
+    } catch (error) {
+      logger.error('Position history error', { error })
+      res.status(500).json({ error: 'Failed to get position history' })
+    }
+  },
+)
+
 export default router

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowDownRight } from 'lucide-react'
+import { ArrowDownRight, History, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { PortfolioCard } from '@/components/dashboard/portfolio-card'
 import { PrizePoolCard } from '@/components/dashboard/prize-pool-card'
 import { AssetCard } from '@/components/dashboard/asset-card'
@@ -17,10 +17,32 @@ export function Dashboard() {
   const token = useAppStore((state) => state.token)
   const user = useAppStore((state) => state.user)
   const applySellResult = useAppStore((state) => state.applySellResult)
+  const positionHistory = useAppStore((state) => state.positionHistory)
+  const setPositionHistory = useAppStore((state) => state.setPositionHistory)
   const totalAllocated = Object.values(allocations).reduce((sum, val) => sum + val, 0)
   const [selling, setSelling] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [sellError, setSellError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+
+    const fetchPositionHistory = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/allocation/position-history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setPositionHistory(data.history || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch position history:', err)
+      }
+    }
+
+    fetchPositionHistory()
+  }, [token, setPositionHistory])
 
   const handleSellAll = async () => {
     if (!token) return
@@ -188,6 +210,101 @@ export function Dashboard() {
           <p className="text-xs text-muted-foreground mb-1">Available</p>
           <p className="text-lg font-bold text-neon-green">{100 - totalAllocated}%</p>
         </div>
+      </motion.section>
+
+      {/* Position History */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <History className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-medium text-muted-foreground">Position History</h2>
+        </div>
+
+        {positionHistory.length === 0 ? (
+          <div className="glass rounded-xl p-6 text-center">
+            <p className="text-sm text-muted-foreground">No position history yet</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Your allocation and trading activity will appear here
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {positionHistory.slice(0, 10).map((entry) => {
+              const isBuy = entry.type === 'buy'
+              const isSell = entry.type === 'sell'
+              const isAllocate = entry.type === 'allocate'
+
+              return (
+                <div
+                  key={entry.id}
+                  className="glass rounded-xl p-3 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        'size-8 rounded-full flex items-center justify-center',
+                        isBuy
+                          ? 'bg-neon-green/10'
+                          : isSell
+                          ? 'bg-neon-pink/10'
+                          : 'bg-neon-cyan/10'
+                      )}
+                    >
+                      {isBuy ? (
+                        <TrendingUp className="size-4 text-neon-green" />
+                      ) : isSell ? (
+                        <TrendingDown className="size-4 text-neon-pink" />
+                      ) : (
+                        <Minus className="size-4 text-neon-cyan" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {isBuy
+                          ? 'Buy'
+                          : isSell
+                          ? 'Sell'
+                          : isAllocate
+                          ? 'Allocate'
+                          : entry.type}
+                        {entry.asset ? ` ${entry.asset}` : ''}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(entry.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className={cn(
+                        'text-sm font-mono font-medium',
+                        isBuy
+                          ? 'text-neon-green'
+                          : isSell
+                          ? 'text-neon-pink'
+                          : 'text-neon-cyan'
+                      )}
+                    >
+                      {isSell ? '-' : '+'}
+                      {entry.amount}%
+                    </p>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {entry.hlxValue.toFixed(2)} HLX
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </motion.section>
     </div>
   )

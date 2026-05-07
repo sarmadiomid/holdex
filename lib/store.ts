@@ -1,7 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-import type { Asset, User, AssetType, LeaderboardEntry, Transaction, PrizePool, EarnTask } from './types'
+import type { Asset, User, AssetType, LeaderboardEntry, Transaction, PrizePool, EarnTask, PositionHistoryEntry } from './types'
 import { initialAssets, mockPrizePool, earnTasks } from './mock-data'
 
 interface BackendLeaderboardEntry {
@@ -45,6 +45,8 @@ interface AppState {
 
   transactions: Transaction[]
 
+  positionHistory: PositionHistoryEntry[]
+
   earnTasks: EarnTask[]
 
   activeTab: 'dashboard' | 'allocate' | 'store' | 'leaderboard' | 'earn'
@@ -77,6 +79,7 @@ interface AppState {
   }) => void
   setLeverage: (leverage: number) => void
   setAssetLeverage: (assetId: AssetType, leverage: number) => void
+  setPositionHistory: (history: PositionHistoryEntry[]) => void
   addBalance: (amount: number) => void
   applySellResult: (newBalance: number) => void
 }
@@ -115,6 +118,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   leaderboardData: null,
   prizePool: mockPrizePool,
   transactions: [],
+  positionHistory: [],
   earnTasks,
   activeTab: 'dashboard',
 
@@ -391,6 +395,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }))
   },
+
+  setPositionHistory: (history) => set({ positionHistory: history }),
 
   applySellResult: (newBalance: number) => {
     const safeBalance = Math.max(0, newBalance)

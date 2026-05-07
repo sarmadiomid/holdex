@@ -132,6 +132,17 @@ export interface Transaction {
   description: string
 }
 
+// Position History entry
+export interface PositionHistoryEntry {
+  id: string
+  type: 'buy' | 'sell' | 'allocate' | 'store_purchase'
+  asset?: AssetType
+  amount: number
+  hlxValue: number
+  priceAtTime?: number
+  createdAt: string
+}
+
 // Earn Task
 export interface EarnTask {
   id: string
