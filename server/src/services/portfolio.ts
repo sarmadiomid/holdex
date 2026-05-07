@@ -58,7 +58,7 @@ export function calculatePortfolioValue(
   const pnlPercent = balance > 0 ? (pnl / balance) * 100 : 0
 
   return {
-    value: Math.round(totalValue * 100) / 100,
+    value: Math.max(0, Math.round(totalValue * 100) / 100),
     pnl: Math.round(pnl * 100) / 100,
     pnlPercent: Math.round(pnlPercent * 100) / 100,
   }

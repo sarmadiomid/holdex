@@ -134,6 +134,25 @@ export async function recalcAndBroadcastUser(user: IUser) {
     user.assetLeverages || undefined,
   )
 
+  // Reset all positions if portfolio value hits 0 or below
+  if (portfolio.value <= 0) {
+    user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
+    user.initialPrices = { BTC: null, GOLD: null, EUR: null }
+    user.balance = 0
+    user.portfolioValue = 0
+    user.totalPnl = 0
+    user.totalPnlPercent = 0
+    await user.save()
+
+    broadcastAllocationUpdate(user.telegramId, { BTC: 0, GOLD: 0, EUR: 0 })
+    broadcastUserUpdate(user.telegramId, {
+      portfolioValue: 0,
+      totalPnl: 0,
+      totalPnlPercent: 0,
+    })
+    return user
+  }
+
   const updated = await User.findByIdAndUpdate(
     user._id,
     {

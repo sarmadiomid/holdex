@@ -156,15 +156,25 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
     const unallocatedPercent = 100 - totalAllocated
     totalValue += user.balance * (unallocatedPercent / 100)
 
-    const newBalance = Math.round(totalValue * 100) / 100
+    let newBalance = Math.max(0, Math.round(totalValue * 100) / 100)
     const pnl = Math.round((totalValue - user.balance) * 100) / 100
 
-    user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
-    user.initialPrices = { BTC: null, GOLD: null, EUR: null }
-    user.balance = newBalance
-    user.portfolioValue = newBalance
-    user.totalPnl = 0
-    user.totalPnlPercent = 0
+    // Reset all positions when balance hits 0
+    if (newBalance <= 0) {
+      user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
+      user.initialPrices = { BTC: null, GOLD: null, EUR: null }
+      user.balance = 0
+      user.portfolioValue = 0
+      user.totalPnl = 0
+      user.totalPnlPercent = 0
+    } else {
+      user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
+      user.initialPrices = { BTC: null, GOLD: null, EUR: null }
+      user.balance = newBalance
+      user.portfolioValue = newBalance
+      user.totalPnl = 0
+      user.totalPnlPercent = 0
+    }
 
     await user.save()
 
@@ -180,7 +190,7 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
     res.json({
       success: true,
       newBalance,
-      pnl: Math.round((newBalance - user.balance) * 100) / 100,
+      pnl,
       soldPositions,
     })
   } catch (error) {

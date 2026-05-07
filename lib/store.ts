@@ -125,14 +125,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       const task = state.earnTasks.find((t) => t.id === taskId)
       if (!task || task.completed) return state
 
+      const newBalance = Math.max(0, state.user.balance + task.reward)
       return {
         earnTasks: state.earnTasks.map((t) =>
           t.id === taskId ? { ...t, completed: true } : t
         ),
         user: {
           ...state.user,
-          balance: state.user.balance + task.reward,
-          portfolioValue: state.user.portfolioValue + task.reward,
+          balance: newBalance,
+          portfolioValue: Math.max(0, state.user.portfolioValue + task.reward),
         },
       }
     })
@@ -254,8 +255,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setAllocations: (allocations) => set({ allocations }),
 
-  updatePortfolioValue: () => {
+   updatePortfolioValue: () => {
     const { assets, allocations, initialPrices, user } = get()
+    if (user.balance <= 0) {
+      set({
+        user: {
+          ...user,
+          balance: 0,
+          portfolioValue: 0,
+          totalPnl: 0,
+          totalPnlPercent: 0,
+        },
+        allocations: { BTC: 0, GOLD: 0, EUR: 0 },
+        initialPrices: createInitialPrices(),
+      })
+      return
+    }
     const assetLeverages = user.assetLeverages || { BTC: user.leverage, GOLD: user.leverage, EUR: user.leverage }
     let totalValue = 0
     let totalAllocated = 0
@@ -281,10 +296,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     const pnl = totalValue - user.balance
     const pnlPercent = user.balance > 0 ? (pnl / user.balance) * 100 : 0
 
+    const newBalance = Math.max(0, Math.round(totalValue * 100) / 100)
     set({
       user: {
         ...user,
-        portfolioValue: Math.round(totalValue * 100) / 100,
+        balance: newBalance,
+        portfolioValue: newBalance,
         totalPnl: Math.round(pnl * 100) / 100,
         totalPnlPercent: Math.round(pnlPercent * 100) / 100,
       },
@@ -369,20 +386,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       user: {
         ...state.user,
-        balance: state.user.balance + amount,
-        portfolioValue: state.user.portfolioValue + amount,
+        balance: Math.max(0, state.user.balance + amount),
+        portfolioValue: Math.max(0, state.user.portfolioValue + amount),
       },
     }))
   },
 
   applySellResult: (newBalance: number) => {
+    const safeBalance = Math.max(0, newBalance)
     set((state) => ({
       allocations: { BTC: 0, GOLD: 0, EUR: 0 },
       initialPrices: createInitialPrices(),
       user: {
         ...state.user,
-        balance: newBalance,
-        portfolioValue: newBalance,
+        balance: safeBalance,
+        portfolioValue: safeBalance,
         totalPnl: 0,
         totalPnlPercent: 0,
       },
