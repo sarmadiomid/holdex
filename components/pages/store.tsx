@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Coins, Zap, Sparkles, Crown, Gem, Loader2, CheckCircle } from 'lucide-react'
+import { Coins, Zap, Sparkles, Crown, Gem, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/ui/glass-card'
 import { NeonText } from '@/components/ui/neon-text'
@@ -19,9 +19,10 @@ export function StorePage() {
   const token = useAppStore((state) => state.token)
   const setLeverage = useAppStore((state) => state.setLeverage)
   const addBalance = useAppStore((state) => state.addBalance)
-  const updateUser = useAppStore((state) => state.updateUser)
+  const setUser = useAppStore((state) => state.setUser)
   const [purchasingId, setPurchasingId] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const hlxItems = storeItems.filter(item => item.type === 'hlx')
   const leverageItems = storeItems.filter(item => item.type === 'leverage')
@@ -29,6 +30,7 @@ export function StorePage() {
   const handlePurchase = async (item: typeof storeItems[0]) => {
     if (purchasingId || !token) return
     setPurchasingId(item.id)
+    setError(null)
     haptic.impact('medium')
 
     try {
@@ -42,12 +44,22 @@ export function StorePage() {
       })
 
       if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Failed to create invoice' }))
+        const errorMessage = errorData.error || `Server error: ${res.status}`
+        setError(errorMessage)
         haptic.notification('error')
         setPurchasingId(null)
         return
       }
 
       const data = await res.json()
+
+      if (!data.invoiceUrl) {
+        setError('Invalid response from server - missing invoice URL')
+        haptic.notification('error')
+        setPurchasingId(null)
+        return
+      }
 
       if (isTelegram) {
         // Open real Telegram Stars invoice
@@ -74,7 +86,14 @@ export function StorePage() {
           
           setSuccessId(item.id)
           setTimeout(() => setSuccessId(null), 2500)
+        } else if (status === 'cancelled') {
+          setError('Payment was cancelled')
+          haptic.notification('warning')
+        } else if (status === 'failed') {
+          setError('Payment failed. Please try again.')
+          haptic.notification('error')
         } else {
+          setError(`Payment status: ${status}`)
           haptic.notification('warning')
         }
       } else {
@@ -88,7 +107,9 @@ export function StorePage() {
         setSuccessId(item.id)
         setTimeout(() => setSuccessId(null), 2500)
       }
-    } catch {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Network error - please check your connection'
+      setError(errorMessage)
       haptic.notification('error')
     } finally {
       setPurchasingId(null)
@@ -97,6 +118,24 @@ export function StorePage() {
 
   return (
     <div className="flex flex-col gap-6 py-4">
+
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 relative"
+        >
+          <AlertCircle className="size-5 text-red-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-400 leading-relaxed flex-1">{error}</p>
+          <button 
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-300 transition-colors"
+          >
+            <X className="size-4" />
+          </button>
+        </motion.div>
+      )}
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-bold text-foreground mb-1">Store</h1>
