@@ -124,7 +124,7 @@ export const mockLeaderboard: LeaderboardEntry[] = [
 // Store items (prices in Telegram Stars)
 export const storeItems: StoreItem[] = [
   {
-    id: 'hlx-1000',
+    id: 'hlx_1000',
     name: '1,000 HLX',
     description: 'Starter pack for new investors',
     starsPrice: 50,
@@ -132,7 +132,7 @@ export const storeItems: StoreItem[] = [
     value: 1000
   },
   {
-    id: 'hlx-5000',
+    id: 'hlx_5000',
     name: '5,000 HLX',
     description: 'Popular choice for active traders',
     starsPrice: 200,
@@ -140,7 +140,7 @@ export const storeItems: StoreItem[] = [
     value: 5000
   },
   {
-    id: 'hlx-10000',
+    id: 'hlx_10000',
     name: '10,000 HLX',
     description: 'Best value package',
     starsPrice: 350,
@@ -148,7 +148,7 @@ export const storeItems: StoreItem[] = [
     value: 10000
   },
   {
-    id: 'hlx-50000',
+    id: 'hlx_50000',
     name: '50,000 HLX',
     description: 'Whale tier investment',
     starsPrice: 1500,
@@ -156,7 +156,7 @@ export const storeItems: StoreItem[] = [
     value: 50000
   },
   {
-    id: 'leverage-2x',
+    id: 'lev_2x',
     name: '2x Leverage',
     description: 'Double your gains (and losses)',
     starsPrice: 250,
@@ -164,7 +164,7 @@ export const storeItems: StoreItem[] = [
     value: 2
   },
   {
-    id: 'leverage-5x',
+    id: 'lev_5x',
     name: '5x Leverage',
     description: 'High risk, high reward',
     starsPrice: 500,
@@ -172,7 +172,7 @@ export const storeItems: StoreItem[] = [
     value: 5
   },
   {
-    id: 'leverage-10x',
+    id: 'lev_10x',
     name: '10x Leverage',
     description: 'Maximum power mode',
     starsPrice: 1000,
