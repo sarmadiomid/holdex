@@ -7,6 +7,8 @@ import { validate } from '../middleware/validate'
 import { logger } from '../utils/logger'
 import { createStarsInvoiceLink } from '../services/telegram'
 
+const router = Router()
+
 export const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; starsPrice: number }> = {
   'hlx_1000': { hlx: 1000, starsPrice: 50 },
   'hlx_5000': { hlx: 5000, starsPrice: 200 },
@@ -17,10 +19,8 @@ export const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; s
   'lev_10x': { leverage: 10, starsPrice: 1000 },
 }
 
-const webhookSchema = z.object({
-  telegramId: z.number(),
+const purchaseSchema = z.object({
   packageId: z.string(),
-  status: z.enum(['paid', 'cancelled', 'failed', 'pending']),
 })
 
 router.post(
@@ -75,6 +75,12 @@ router.post(
     }
   },
 )
+
+const webhookSchema = z.object({
+  telegramId: z.number(),
+  packageId: z.string(),
+  status: z.enum(['paid', 'cancelled', 'failed', 'pending']),
+})
 
 router.post(
   '/webhook',
