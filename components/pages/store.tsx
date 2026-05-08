@@ -19,6 +19,7 @@ export function StorePage() {
   const token = useAppStore((state) => state.token)
   const setLeverage = useAppStore((state) => state.setLeverage)
   const addBalance = useAppStore((state) => state.addBalance)
+  const updateUser = useAppStore((state) => state.updateUser)
   const [purchasingId, setPurchasingId] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
 
@@ -49,31 +50,35 @@ export function StorePage() {
       const data = await res.json()
 
       if (isTelegram) {
+        // Open real Telegram Stars invoice
         const status = await openInvoice(data.invoiceUrl)
 
         if (status === 'paid') {
-          await fetch(`${BACKEND_URL}/api/stars/webhook`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              telegramId: parseInt(user.id, 10),
-              packageId: item.id,
-              status: 'paid',
-            }),
-          })
-
           haptic.notification('success')
+          
+          // Optimistically update UI (will be confirmed by webhook)
           if (item.type === 'hlx' && item.value) {
             addBalance(item.value)
+            if (user) {
+              setUser({
+                balance: user.balance + item.value,
+                portfolioValue: user.portfolioValue + item.value,
+              })
+            }
           } else if (item.type === 'leverage' && item.value) {
             setLeverage(item.value)
+            if (user) {
+              setUser({ leverage: item.value })
+            }
           }
+          
           setSuccessId(item.id)
           setTimeout(() => setSuccessId(null), 2500)
         } else {
           haptic.notification('warning')
         }
       } else {
+        // Non-Telegram fallback (for testing in browser)
         haptic.notification('success')
         if (item.type === 'hlx' && item.value) {
           addBalance(item.value)

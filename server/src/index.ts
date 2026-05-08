@@ -16,6 +16,9 @@ import leaderboardRoutes from './routes/leaderboard'
 import earnRoutes from './routes/earn'
 import referralRoutes from './routes/referral'
 import { generalLimiter } from './middleware/rateLimit'
+import { User } from './db/models/User'
+import { Position } from './db/models/Position'
+import { STARS_PACKAGES } from './routes/stars'
 
 async function bootstrap() {
   await connectDB()
@@ -59,6 +62,121 @@ async function bootstrap() {
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() })
+  })
+
+  // Telegram webhook endpoint for Stars payment verification
+  app.post('/telegram-webhook', express.json(), async (req, res) => {
+    try {
+      const update = req.body
+      logger.info('Received Telegram webhook', { updateId: update.update_id })
+
+      // Handle pre-checkout query (must answer within 10 seconds)
+      if (update.pre_checkout_query) {
+        const { id: queryId, payload } = update.pre_checkout_query
+        
+        try {
+          const parsedPayload = JSON.parse(payload)
+          const { packageId } = parsedPayload
+          
+          if (STARS_PACKAGES[packageId]) {
+            // Approve the checkout
+            const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
+            await fetch(answerUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pre_checkout_query_id: queryId, ok: true }),
+            })
+            logger.info('Approved pre-checkout query', { queryId, packageId })
+          } else {
+            // Reject with error
+            const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
+            await fetch(answerUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                pre_checkout_query_id: queryId, 
+                ok: false, 
+                error_message: 'Invalid package' 
+              }),
+            })
+            logger.warn('Rejected pre-checkout query - invalid package', { queryId, packageId })
+          }
+        } catch (error) {
+          logger.error('Error processing pre-checkout query', { error, queryId })
+          const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
+          await fetch(answerUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              pre_checkout_query_id: queryId, 
+              ok: false, 
+              error_message: 'Processing error' 
+            }),
+          })
+        }
+      }
+
+      // Handle successful payment
+      if (update.message?.successful_payment) {
+        const { successful_payment, from } = update.message
+        const { invoice_payload, telegram_payment_charge_id } = successful_payment
+        
+        try {
+          const parsedPayload = JSON.parse(invoice_payload)
+          const { packageId, telegramId } = parsedPayload
+          
+          const pkg = STARS_PACKAGES[packageId]
+          if (!pkg) {
+            logger.error('Invalid package in payment', { packageId, telegramId })
+            return res.json({ ok: true })
+          }
+
+          const user = await User.findOne({ telegramId })
+          if (!user) {
+            logger.error('User not found for payment', { telegramId, packageId })
+            return res.json({ ok: true })
+          }
+
+          if (pkg.hlx) {
+            user.balance += pkg.hlx
+            user.portfolioValue += pkg.hlx
+            await Position.create({
+              userId: user._id,
+              type: 'store_purchase',
+              amount: pkg.hlx,
+              hlxValue: pkg.hlx,
+            })
+            logger.info(`User ${telegramId} purchased ${pkg.hlx} HLX for ${pkg.starsPrice} stars`, {
+              chargeId: telegram_payment_charge_id,
+            })
+          }
+
+          if (pkg.leverage) {
+            user.leverage = pkg.leverage
+            await Position.create({
+              userId: user._id,
+              type: 'store_purchase',
+              asset: 'BTC',
+              amount: 0,
+              hlxValue: 0,
+            })
+            logger.info(`User ${telegramId} purchased ${pkg.leverage}x leverage for ${pkg.starsPrice} stars`, {
+              chargeId: telegram_payment_charge_id,
+            })
+          }
+
+          await user.save()
+          logger.info('Payment processed successfully', { telegramId, packageId, chargeId: telegram_payment_charge_id })
+        } catch (error) {
+          logger.error('Error processing successful payment', { error, invoice_payload })
+        }
+      }
+
+      res.json({ ok: true })
+    } catch (error) {
+      logger.error('Webhook error', { error })
+      res.json({ ok: true }) // Always return ok to Telegram
+    }
   })
 
   app.use('/api/auth', authRoutes)

@@ -95,3 +95,49 @@ export async function getChatInfo(chatId: string): Promise<{
     return null
   }
 }
+
+/**
+ * Create a Telegram Stars invoice link using Bot API
+ * @param params - Invoice parameters
+ * @returns Invoice link or null on error
+ */
+export async function createStarsInvoiceLink(params: {
+  title: string
+  description: string
+  payload: string
+  amount: number
+}): Promise<string | null> {
+  try {
+    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/createInvoiceLink`
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: params.title,
+        description: params.description,
+        payload: params.payload,
+        currency: 'XTR', // XTR is the currency code for Telegram Stars
+        prices: [{ label: 'Telegram Stars', amount: params.amount }],
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!data.ok) {
+      logger.error('Failed to create Stars invoice link', { 
+        error: data.description,
+        params 
+      })
+      return null
+    }
+
+    logger.info('Created Stars invoice link', { payload: params.payload })
+    return data.result
+  } catch (error) {
+    logger.error('Error creating Stars invoice link', { error, params })
+    return null
+  }
+}

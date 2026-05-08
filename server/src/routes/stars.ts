@@ -5,14 +5,9 @@ import { Position } from '../db/models/Position'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { validate } from '../middleware/validate'
 import { logger } from '../utils/logger'
+import { createStarsInvoiceLink } from '../services/telegram'
 
-const router = Router()
-
-const purchaseSchema = z.object({
-  packageId: z.string(),
-})
-
-const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; starsPrice: number }> = {
+export const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; starsPrice: number }> = {
   'hlx_1000': { hlx: 1000, starsPrice: 50 },
   'hlx_5000': { hlx: 5000, starsPrice: 200 },
   'hlx_10000': { hlx: 10000, starsPrice: 350 },
@@ -42,10 +37,31 @@ router.post(
         return res.status(400).json({ error: 'Invalid package' })
       }
 
-      const invoiceUrl = `https://t.me/holdextest_bot?start=pay_${packageId}_${telegramId}`
+      // Create human-readable title and description
+      const title = pkg.hlx
+        ? `${pkg.hlx.toLocaleString()} HLX Tokens`
+        : `${pkg.leverage}x Leverage Booster`
+      
+      const description = pkg.hlx
+        ? `Purchase ${pkg.hlx.toLocaleString()} HLX tokens for Holdex trading`
+        : `Unlock ${pkg.leverage}x leverage for your trades`
+
+      // Create real Telegram Stars invoice link
+      const invoiceLink = await createStarsInvoiceLink({
+        title,
+        description,
+        payload: JSON.stringify({ packageId, telegramId }),
+        amount: pkg.starsPrice,
+      })
+
+      if (!invoiceLink) {
+        return res.status(500).json({ error: 'Failed to create invoice' })
+      }
+
+      logger.info(`Created Stars invoice for user ${telegramId}, package ${packageId}`)
 
       res.json({
-        invoiceUrl,
+        invoiceUrl: invoiceLink,
         package: {
           id: packageId,
           starsPrice: pkg.starsPrice,
