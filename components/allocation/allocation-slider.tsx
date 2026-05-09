@@ -164,20 +164,29 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
             animate={{ opacity: 1, height: 'auto' }}
             className="pt-2 border-t border-glass-border"
           >
-            <p className="text-xs text-muted-foreground mb-2">Leverage</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-muted-foreground">Leverage</p>
+              {user.leverage === 1 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/40 text-muted-foreground/60 border border-border/30">
+                  Unlock in Store
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
-              {LEVERAGE_OPTIONS.map((lev) => {
+              {LEVERAGE_OPTIONS.filter(lev => lev <= user.leverage).map((lev) => {
                 const isActive = currentLeverage === lev
+                const isLocked = user.leverage === 1
                 return (
                   <motion.button
                     key={lev}
-                    onClick={() => handleLeverageChange(lev)}
+                    onClick={() => !isLocked && handleLeverageChange(lev)}
                     className={cn(
                       'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
                       isActive ? cn(colors.bg, colors.text, 'border', colors.border) :
+                      isLocked ? 'bg-muted/20 text-muted-foreground/40 cursor-not-allowed' :
                       'bg-muted/30 text-muted-foreground hover:bg-muted/50'
                     )}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={!isLocked ? { scale: 0.95 } : undefined}
                   >
                     {lev}x
                   </motion.button>

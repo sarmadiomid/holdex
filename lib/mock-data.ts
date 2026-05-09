@@ -167,7 +167,7 @@ export const storeItems: StoreItem[] = [
     id: 'lev_5x',
     name: '5x Leverage',
     description: 'High risk, high reward',
-    starsPrice: 500,
+    starsPrice: 1,
     type: 'leverage',
     value: 5
   },
