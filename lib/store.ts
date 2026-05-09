@@ -19,6 +19,7 @@ interface AppState {
   user: User
   isAuthenticated: boolean
   token: string | null
+  isTourCompleted: boolean
 
   assets: Asset[]
   allocations: Record<AssetType, number>
@@ -126,7 +127,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   earnTasks,
   activeTab: 'dashboard',
 
+  isTourCompleted: typeof window !== 'undefined' ? localStorage.getItem('holdex_tour_completed') === 'true' : false,
+
   setActiveTab: (tab) => set({ activeTab: tab }),
+
+  setTourCompleted: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('holdex_tour_completed', 'true')
+    }
+    set({ isTourCompleted: true })
+  },
 
   completeTask: (taskId) => {
     set((state) => {

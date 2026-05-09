@@ -15,7 +15,7 @@ export function Header({ onProfileClick }: HeaderProps) {
   const { haptic } = useTelegram()
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-glass-border safe-area-pt">
+    <header data-tour="header" className="fixed top-0 left-0 right-0 z-50 glass border-b border-glass-border safe-area-pt">
       <div className="flex items-center justify-between px-4 py-3">
         <motion.div 
           className="flex items-center gap-2"
@@ -35,7 +35,7 @@ export function Header({ onProfileClick }: HeaderProps) {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-neon-cyan/30">
+          <div data-tour="portfolio" className="flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-neon-cyan/30">
             <Wallet className="size-4 text-neon-cyan" />
             <span className="text-sm font-mono font-medium text-foreground">
               {user.portfolioValue.toLocaleString()}

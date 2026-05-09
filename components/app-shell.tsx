@@ -11,6 +11,7 @@ import { StorePage } from '@/components/pages/store'
 import { Leaderboard } from '@/components/pages/leaderboard'
 import { EarnPage } from '@/components/pages/earn'
 import { Profile } from '@/components/pages/profile'
+import { OnboardingTour } from '@/components/onboarding-tour'
 import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
 import { useSocket } from '@/hooks/use-socket'
@@ -250,6 +251,8 @@ export function AppShell() {
       <AnimatePresence>
         {showProfile && <Profile onClose={() => setShowProfile(false)} />}
       </AnimatePresence>
+
+      <OnboardingTour />
     </div>
   )
 }

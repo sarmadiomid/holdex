@@ -7,11 +7,11 @@ import { useTelegram } from '@/hooks/use-telegram'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'allocate' as const, label: 'Allocate', icon: PieChart },
-  { id: 'earn' as const, label: 'Earn', icon: Coins },
-  { id: 'store' as const, label: 'Store', icon: Store },
-  { id: 'leaderboard' as const, label: 'Rankings', icon: Trophy }
+  { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard, tourSelector: 'nav-dashboard' },
+  { id: 'allocate' as const, label: 'Allocate', icon: PieChart, tourSelector: 'nav-allocate' },
+  { id: 'earn' as const, label: 'Earn', icon: Coins, tourSelector: 'nav-earn' },
+  { id: 'store' as const, label: 'Store', icon: Store, tourSelector: 'nav-store' },
+  { id: 'leaderboard' as const, label: 'Rankings', icon: Trophy, tourSelector: 'nav-leaderboard' }
 ]
 
 export function BottomNav() {
@@ -29,6 +29,7 @@ export function BottomNav() {
           return (
             <motion.button
               key={item.id}
+              data-tour={item.tourSelector}
               onClick={() => {
                 haptic.selection()
                 setActiveTab(item.id)
