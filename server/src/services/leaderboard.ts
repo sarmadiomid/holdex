@@ -16,10 +16,12 @@ const DISTRIBUTION = [
 ]
 
 function getCurrentSeason(): number {
-  const epoch = new Date('2025-01-06T00:00:00Z').getTime()
-  const now = Date.now()
-  const weekMs = 7 * 24 * 60 * 60 * 1000
-  return Math.floor((now - epoch) / weekMs) + 1
+  const now = new Date()
+  const dayOfWeek = now.getUTCDay()
+  const weekStart = new Date(now)
+  weekStart.setUTCDate(now.getUTCDate() - dayOfWeek)
+  weekStart.setUTCHours(0, 0, 0, 0)
+  return Math.floor(weekStart.getTime() / (7 * 24 * 60 * 60 * 1000))
 }
 
 export type TournamentPhase = 'active' | 'cooldown'
