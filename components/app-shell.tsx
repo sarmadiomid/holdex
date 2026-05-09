@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Gem, Clock } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { Header } from '@/components/navigation/header'
 import { BottomNav } from '@/components/navigation/bottom-nav'
 import { Dashboard } from '@/components/pages/dashboard'
@@ -22,132 +22,112 @@ if (typeof window !== 'undefined') {
   console.log('[app] Resolved BACKEND_URL:', BACKEND_URL)
 }
 
-function useLandingCountdown(endsAt: number) {
-  const calc = () => {
-    const diff = Math.max(0, endsAt - Date.now())
-    return {
-      days: Math.floor(diff / 86400000),
-      hours: Math.floor((diff % 86400000) / 3600000),
-      minutes: Math.floor((diff % 3600000) / 60000),
-      seconds: Math.floor((diff % 60000) / 1000),
-    }
-  }
-  const [t, setT] = useState(calc)
-  useEffect(() => {
-    const id = setInterval(() => setT(calc()), 1000)
-    return () => clearInterval(id)
-  })
-  return t
-}
-
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 }
 }
 
-function LandingScreen() {
-  const prizePool = useAppStore((state) => state.prizePool)
-  const t = useLandingCountdown(prizePool.endsAt)
+function LoadingScreen() {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const startTime = Date.now()
+    const duration = 2500
+    const animate = () => {
+      const elapsed = Date.now() - startTime
+      const t = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setProgress(eased * 100)
+      if (t < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  }, [])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 gap-10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 gap-12">
       <motion.div
-        className="flex flex-col items-center gap-3"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        className="flex flex-col items-center gap-6"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        <motion.div
-          className="size-20 rounded-3xl gradient-neon flex items-center justify-center"
-          animate={{
-            boxShadow: [
-              '0 0 24px rgba(0,255,255,0.35)',
-              '0 0 48px rgba(0,255,255,0.55)',
-              '0 0 24px rgba(0,255,255,0.35)',
-            ]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <span className="text-4xl font-bold text-background">H</span>
-        </motion.div>
+        <div className="relative">
+          <motion.div
+            className="size-24 rounded-3xl gradient-neon flex items-center justify-center"
+            animate={{
+              boxShadow: [
+                '0 0 32px rgba(0,255,255,0.4)',
+                '0 0 64px rgba(0,255,255,0.6)',
+                '0 0 32px rgba(0,255,255,0.4)',
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <span className="text-5xl font-bold text-background">H</span>
+          </motion.div>
+          <motion.div
+            className="absolute -bottom-1 -right-1 size-6 rounded-full bg-neon-gold flex items-center justify-center"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <Sparkles className="size-3 text-background" />
+          </motion.div>
+        </div>
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Holdex</h1>
-          <p className="text-sm text-muted-foreground mt-1">Investment tournament simulator</p>
+          <h1 className="text-4xl font-bold text-foreground tracking-tight">Holdex</h1>
+          <p className="text-sm text-muted-foreground mt-2">Investment tournament simulator</p>
         </div>
       </motion.div>
 
       <motion.div
-        className="w-full max-w-sm"
+        className="w-full max-w-xs"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
       >
-        <div className="glass rounded-2xl p-5 border border-neon-gold/30">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Season {prizePool.season}</p>
-              <p className="font-semibold text-foreground">Weekly Tournament</p>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neon-gold/20 border border-neon-gold/40">
-              <Gem className="size-3.5 text-neon-cyan" />
-              <span className="text-sm font-bold font-mono text-neon-gold">{prizePool.totalTon} TON</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 mb-3">
-            <Clock className="size-3.5 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">Tournament ends in</p>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { value: t.days, label: 'Days' },
-              { value: t.hours, label: 'Hours' },
-              { value: t.minutes, label: 'Mins' },
-              { value: t.seconds, label: 'Secs' },
-            ].map(({ value, label }) => (
-              <div key={label} className="flex flex-col items-center">
-                <div className="w-full h-14 rounded-xl bg-muted/40 border border-border/40 flex items-center justify-center">
-                  <motion.span
-                    key={value}
-                    initial={{ y: -8, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-2xl font-bold font-mono text-foreground"
-                  >
-                    {String(value).padStart(2, '0')}
-                  </motion.span>
-                </div>
-                <span className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wide">{label}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            {[
-              { rank: '1st', prize: prizePool.distribution[0]?.tonAmount, color: 'text-neon-gold', bg: 'bg-neon-gold/15 border-neon-gold/40' },
-              { rank: '2nd', prize: prizePool.distribution[1]?.tonAmount, color: 'text-foreground', bg: 'bg-muted/30 border-border/40' },
-              { rank: '3rd', prize: prizePool.distribution[2]?.tonAmount, color: 'text-neon-pink', bg: 'bg-neon-pink/15 border-neon-pink/40' },
-            ].map(({ rank, prize, color, bg }) => (
-              <div key={rank} className={`rounded-xl p-2 text-center border ${bg}`}>
-                <p className="text-[10px] text-muted-foreground">{rank}</p>
-                <p className={`text-sm font-bold font-mono ${color}`}>{prize}</p>
-                <p className={`text-[10px] ${color} opacity-70`}>TON</p>
-              </div>
-            ))}
-          </div>
+        <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+          <motion.div
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-neon-cyan to-neon-gold"
+            style={{ width: `${progress}%` }}
+            transition={{ ease: 'linear' }}
+          />
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <motion.div
+            className="w-2 h-2 rounded-full bg-neon-cyan"
+            animate={{ opacity: [0.5, 1, 0.5], scale: [0.8, 1, 0.8] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+          <span className="text-xs text-muted-foreground">
+            {progress < 30 ? 'Connecting...' : progress < 60 ? 'Loading data...' : progress < 90 ? 'Almost ready...' : 'Starting...'}
+          </span>
         </div>
       </motion.div>
 
-      <motion.p
-        className="text-xs text-muted-foreground"
+      <motion.div
+        className="flex items-center gap-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.6 }}
       >
-        Connecting to Holdex...
-      </motion.p>
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className="w-2 h-8 rounded-full bg-gradient-to-b from-neon-cyan/60 to-neon-cyan/20"
+            animate={{
+              scaleY: [0.4, 1, 0.4],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              delay: i * 0.15,
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
+      </motion.div>
     </div>
   )
 }
@@ -207,7 +187,7 @@ export function AppShell() {
   }, [isReady, isTelegram, webApp])
 
   if (!isReady || authenticating) {
-    return <LandingScreen />
+    return <LoadingScreen />
   }
 
   if (authError) {
