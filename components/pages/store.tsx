@@ -62,8 +62,9 @@ export function StorePage() {
       }
 
       if (isTelegram) {
-        // Open real Telegram Stars invoice
+        console.log('[store] Opening Telegram invoice:', data.invoiceUrl)
         const status = await openInvoice(data.invoiceUrl)
+        console.log('[store] Invoice closed with status:', status)
 
         if (status === 'paid') {
           haptic.notification('success')
@@ -84,6 +85,10 @@ export function StorePage() {
             }
           }
           
+          setSuccessId(item.id)
+          setTimeout(() => setSuccessId(null), 2500)
+        } else if (status === 'pending') {
+          haptic.notification('success')
           setSuccessId(item.id)
           setTimeout(() => setSuccessId(null), 2500)
         } else if (status === 'cancelled') {

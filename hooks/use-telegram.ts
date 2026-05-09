@@ -69,13 +69,33 @@ export function useTelegram(): UseTelegramReturn {
 
   const openInvoice = useCallback((invoiceUrl: string): Promise<'paid' | 'cancelled' | 'failed' | 'pending'> => {
     return new Promise((resolve) => {
+      let resolved = false
+      const timeoutMs = 30000
+
+      const resolveOnce = (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
+        if (resolved) return
+        resolved = true
+        clearTimeout(timeout)
+        resolve(status)
+      }
+
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          console.log('[telegram] Invoice timeout - awaiting webhook confirmation')
+          resolveOnce('pending')
+        }
+      }, timeoutMs)
+
       if (webApp?.openInvoice) {
+        console.log('[telegram] Calling webApp.openInvoice with:', invoiceUrl)
         webApp.openInvoice(invoiceUrl, (status) => {
-          resolve(status)
+          console.log('[telegram] openInvoice callback received status:', status)
+          resolveOnce(status)
         })
+        console.log('[telegram] openInvoice called, awaiting callback...')
       } else {
         console.log('[telegram] Mock payment for invoice:', invoiceUrl)
-        setTimeout(() => resolve('paid'), 1000)
+        setTimeout(() => resolveOnce('paid'), 1000)
       }
     })
   }, [webApp])
