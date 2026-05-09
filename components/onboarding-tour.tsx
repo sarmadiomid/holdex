@@ -134,7 +134,6 @@ export function OnboardingTour() {
       setVisible(false)
       setTourCompleted()
       window.dispatchEvent(new CustomEvent('tourHighlight', { detail: { tab: null } }))
-      setActiveTab('dashboard')
     }
   }, [currentStep, setTourCompleted])
 
@@ -142,7 +141,6 @@ export function OnboardingTour() {
     setVisible(false)
     setTourCompleted()
     window.dispatchEvent(new CustomEvent('tourHighlight', { detail: { tab: null } }))
-    setActiveTab('dashboard')
   }, [setTourCompleted])
 
   const handleBack = useCallback(() => {
@@ -204,7 +202,9 @@ export function OnboardingTour() {
     return { top, left, transform }
   }
 
-  if (!visible) return null
+if (!visible) return null
+
+  const padding = 8
 
   return (
     <AnimatePresence>
@@ -214,94 +214,41 @@ export function OnboardingTour() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] pointer-events-none"
       >
-        <div className="fixed inset-0 bg-black/50 pointer-events-auto" />
+        <svg className="fixed inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <mask id="tour-hole-mask">
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              <rect
+                x={targetRect ? targetRect.left - padding : 0}
+                y={targetRect ? targetRect.top - padding : 0}
+                width={targetRect ? targetRect.width + padding * 2 : 0}
+                height={targetRect ? targetRect.height + padding * 2 : 0}
+                rx="12"
+                fill="black"
+              />
+            </mask>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="rgba(0,0,0,0.6)"
+            mask="url(#tour-hole-mask)"
+          />
+        </svg>
 
         {targetRect && (
-          <>
-            <div
-              className="absolute border-2 border-neon-cyan rounded-xl pointer-events-none"
-              style={{
-                top: targetRect.top - 4,
-                left: targetRect.left - 4,
-                width: targetRect.width + 8,
-                height: targetRect.height + 8,
-                boxShadow: '0 0 20px rgba(0,255,255,0.5), inset 0 0 20px rgba(0,255,255,0.1)'
-              }}
-            />
-
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: 0,
-                left: 0,
-                width: targetRect.left,
-                height: targetRect.top
-              }}
-            />
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: 0,
-                left: targetRect.left + targetRect.width + 4,
-                width: window.innerWidth - targetRect.left - targetRect.width - 4,
-                height: targetRect.top
-              }}
-            />
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: targetRect.top + targetRect.height + 4,
-                left: 0,
-                width: targetRect.left,
-                height: window.innerHeight - targetRect.top - targetRect.height - 4
-              }}
-            />
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: targetRect.top + targetRect.height + 4,
-                left: targetRect.left + targetRect.width + 4,
-                width: window.innerWidth - targetRect.left - targetRect.width - 4,
-                height: window.innerHeight - targetRect.top - targetRect.height - 4
-              }}
-            />
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: targetRect.top + targetRect.height + 4,
-                left: targetRect.left,
-                width: targetRect.width,
-                height: window.innerHeight - targetRect.top - targetRect.height - 4
-              }}
-            />
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: targetRect.top,
-                left: 0,
-                width: targetRect.left,
-                height: targetRect.height
-              }}
-            />
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: targetRect.top,
-                left: targetRect.left + targetRect.width + 4,
-                width: window.innerWidth - targetRect.left - targetRect.width - 4,
-                height: targetRect.height
-              }}
-            />
-            <div
-              className="absolute bg-transparent"
-              style={{
-                top: targetRect.top,
-                left: targetRect.left,
-                width: targetRect.width,
-                height: targetRect.top
-              }}
-            />
-          </>
+          <div
+            className="absolute border-2 border-neon-cyan rounded-xl pointer-events-none"
+            style={{
+              top: targetRect.top - padding,
+              left: targetRect.left - padding,
+              width: targetRect.width + padding * 2,
+              height: targetRect.height + padding * 2,
+              boxShadow: '0 0 24px rgba(0,255,255,0.6), inset 0 0 24px rgba(0,255,255,0.15)'
+            }}
+          />
         )}
 
         <motion.div
