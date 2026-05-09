@@ -42,6 +42,11 @@ export function Leaderboard() {
   const season = leaderboardData?.season ?? 1
   const userPosition = leaderboardData?.userPosition
 
+  const userRank = leaderboard.findIndex(e => e.user.id === user.id) + 1
+  const top15 = leaderboard.slice(0, 15)
+  const userEntry = leaderboard.find(e => e.user.id === user.id)
+  const showUserBelowTop15 = userRank > 15 && userEntry
+
   const targetTime = prizePool.nextPhaseStartsAt
   const [time, setTime] = useState(formatTimeLeft(new Date(targetTime)))
 
@@ -205,19 +210,20 @@ export function Leaderboard() {
       </motion.div>
 
       <section>
-        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">All Players</h2>
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Top 15</h2>
         <div className="flex flex-col gap-2">
-          {leaderboard.length === 0 ? (
+          {top15.length === 0 ? (
             <div className="text-center py-12">
               <Trophy className="size-10 text-muted-foreground mx-auto mb-3 opacity-40" />
               <p className="text-sm text-muted-foreground">No rankings yet this week</p>
               <p className="text-xs text-muted-foreground mt-1">Be the first to allocate!</p>
             </div>
           ) : (
-            leaderboard.map((entry, index) => {
+            top15.map((entry, index) => {
               const prize = getTonPrize(entry.rank)
               const styles = rankStyles[entry.rank]
               const isPositive = entry.pnl >= 0
+              const isCurrentUser = entry.user.id === user.id
 
               return (
                 <motion.div
@@ -228,13 +234,14 @@ export function Leaderboard() {
                 >
                   <div className={cn(
                     'glass rounded-xl p-3 flex items-center justify-between',
+                    isCurrentUser && 'border-neon-cyan bg-neon-cyan/10',
                     styles && `border ${styles.border}`,
                     styles?.glow && `shadow-sm ${styles.glow}`
                   )}>
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         'size-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0',
-                        styles ? `${styles.bg} ${styles.text}` : 'bg-muted/40 text-muted-foreground'
+                        isCurrentUser ? 'bg-neon-cyan/30 text-neon-cyan' : styles ? `${styles.bg} ${styles.text}` : 'bg-muted/40 text-muted-foreground'
                       )}>
                         {entry.rank}
                       </div>
@@ -268,6 +275,44 @@ export function Leaderboard() {
                 </motion.div>
               )
             })
+          )}
+
+          {showUserBelowTop15 && userEntry && (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-px bg-border/50" />
+                <span className="text-xs text-muted-foreground">Your ranking</span>
+                <div className="flex-1 h-px bg-border/50" />
+              </div>
+              <motion.div
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className="glass rounded-xl p-3 flex items-center justify-between border-neon-cyan bg-neon-cyan/10">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 bg-neon-cyan/30 text-neon-cyan">
+                      {userRank}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="size-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <User className="size-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground leading-none mb-0.5">{userEntry.user.firstName}</p>
+                        <p className="text-xs text-muted-foreground">@{userEntry.user.username}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-0.5">
+                    <p className="text-sm font-mono text-foreground">{userEntry.portfolioValue.toLocaleString()}</p>
+                    <p className={cn('text-xs font-mono', userEntry.pnl >= 0 ? 'text-neon-green' : 'text-neon-pink')}>
+                      {userEntry.pnl >= 0 ? '+' : ''}{userEntry.pnlPercent.toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </>
           )}
         </div>
       </section>
