@@ -13,6 +13,7 @@ interface TourStep {
   description: string
   icon: React.ReactNode
   position: 'top' | 'bottom' | 'left' | 'right'
+  highlightNav?: 'dashboard' | 'allocate' | 'earn' | 'store' | 'leaderboard'
 }
 
 const TOUR_STEPS: TourStep[] = [
@@ -38,7 +39,8 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Allocate Your Portfolio',
     description: 'Distribute your HLX across Bitcoin, Gold, and EUR/USD. Your gains are amplified by leverage!',
     icon: <PieChart className="size-5" />,
-    position: 'top'
+    position: 'top',
+    highlightNav: 'allocate'
   },
   {
     id: 'earn',
@@ -46,7 +48,8 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Earn Free HLX',
     description: 'Complete social tasks to earn extra HLX. Follow, share, and invite friends to boost your balance.',
     icon: <Coins className="size-5" />,
-    position: 'top'
+    position: 'top',
+    highlightNav: 'earn'
   },
   {
     id: 'store',
@@ -54,7 +57,8 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Upgrade Your Power',
     description: 'Buy leverage boosters in the Store to multiply your gains (and losses). Use Telegram Stars!',
     icon: <Store className="size-5" />,
-    position: 'top'
+    position: 'top',
+    highlightNav: 'store'
   },
   {
     id: 'leaderboard',
@@ -62,7 +66,8 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Weekly Rankings',
     description: 'Compete against other traders. Top performers win real TON prizes! Check your rank here.',
     icon: <Trophy className="size-5" />,
-    position: 'top'
+    position: 'top',
+    highlightNav: 'leaderboard'
   }
 ]
 
@@ -89,7 +94,11 @@ export function OnboardingTour() {
 
   useEffect(() => {
     if (!isTourCompleted && isAuthenticated) {
-      const timer = setTimeout(() => setVisible(true), 1500)
+      const timer = setTimeout(() => {
+        setVisible(true)
+        const highlightNav = TOUR_STEPS[currentStep]?.highlightNav
+        window.dispatchEvent(new CustomEvent('tourHighlight', { detail: { tab: highlightNav || null } }))
+      }, 1500)
       return () => clearTimeout(timer)
     }
   }, [isTourCompleted, isAuthenticated])
@@ -117,21 +126,31 @@ export function OnboardingTour() {
 
   const handleNext = useCallback(() => {
     if (currentStep < TOUR_STEPS.length - 1) {
-      setCurrentStep(prev => prev + 1)
+      const nextStep = currentStep + 1
+      setCurrentStep(nextStep)
+      const highlightNav = TOUR_STEPS[nextStep]?.highlightNav
+      window.dispatchEvent(new CustomEvent('tourHighlight', { detail: { tab: highlightNav || null } }))
     } else {
       setVisible(false)
       setTourCompleted()
+      window.dispatchEvent(new CustomEvent('tourHighlight', { detail: { tab: null } }))
+      setActiveTab('dashboard')
     }
   }, [currentStep, setTourCompleted])
 
   const handleSkip = useCallback(() => {
     setVisible(false)
     setTourCompleted()
+    window.dispatchEvent(new CustomEvent('tourHighlight', { detail: { tab: null } }))
+    setActiveTab('dashboard')
   }, [setTourCompleted])
 
   const handleBack = useCallback(() => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1)
+      const prevStep = currentStep - 1
+      setCurrentStep(prevStep)
+      const highlightNav = TOUR_STEPS[prevStep]?.highlightNav
+      window.dispatchEvent(new CustomEvent('tourHighlight', { detail: { tab: highlightNav || null } }))
     }
   }, [currentStep])
 
