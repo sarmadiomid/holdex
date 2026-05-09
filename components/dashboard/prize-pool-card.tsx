@@ -16,22 +16,22 @@ function formatTimeLeft(endsAt: number) {
   return { days, hours, minutes, seconds }
 }
 
-function TimeUnit({ value, label, dimmed = false }: { value: number; label: string; dimmed?: boolean }) {
+function TimeUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <div className={`relative min-w-[44px] h-11 rounded-xl border flex items-center justify-center overflow-hidden ${dimmed ? 'bg-muted/20 border-border/20' : 'bg-muted/40 border-border/40'}`}>
+      <div className="relative min-w-[44px] h-11 rounded-xl bg-muted/40 border border-border/40 flex items-center justify-center overflow-hidden">
         <motion.span
           key={value}
           initial={{ y: -16, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 16, opacity: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className={`text-lg font-bold font-mono ${dimmed ? 'text-muted-foreground/50' : 'text-foreground'}`}
+          className="text-lg font-bold font-mono text-foreground"
         >
           {String(value).padStart(2, '0')}
         </motion.span>
       </div>
-      <span className={`text-[10px] mt-1 uppercase tracking-wide ${dimmed ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>{label}</span>
+      <span className="text-[10px] mt-1 uppercase tracking-wide text-muted-foreground">{label}</span>
     </div>
   )
 }
@@ -50,12 +50,10 @@ export function PrizePoolCard() {
     return () => clearInterval(id)
   }, [targetTime])
 
-  const top3Prizes = prizePool.distribution.slice(0, 3)
+  const topPrizes = prizePool.distribution.slice(0, 3)
 
   return (
-    <GlassCard glow={isCooldown ? 'none' : 'gold'} className={`relative overflow-hidden ${isCooldown ? 'opacity-80' : ''}`}>
-      <div className={`absolute inset-0 pointer-events-none ${isCooldown ? 'bg-gradient-to-br from-muted/20 via-transparent to-muted/10' : 'bg-gradient-to-br from-neon-gold/8 via-transparent to-neon-cyan/5'}`} />
-
+    <GlassCard glow={isCooldown ? 'none' : 'gold'} className="relative overflow-hidden">
       {!isCooldown && (
         <motion.div
           className="absolute -top-10 -right-10 size-32 rounded-full bg-neon-gold/15 blur-3xl pointer-events-none"
@@ -102,9 +100,9 @@ export function PrizePoolCard() {
           <span className={`text-base font-medium self-end pb-0.5 ${isCooldown ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>TON</span>
         </div>
 
-        {/* Top 3 inline prizes */}
+        {/* Top 3 prizes */}
         <div className="flex gap-2">
-          {top3Prizes.map((prize, i) => {
+          {topPrizes.map((prize, i) => {
             const colors = isCooldown ? [
               { text: 'text-muted-foreground/50', bg: 'bg-muted/10', border: 'border-border/20' },
               { text: 'text-muted-foreground/40', bg: 'bg-muted/10', border: 'border-border/20' },
@@ -130,21 +128,17 @@ export function PrizePoolCard() {
           <div className="flex items-center gap-1.5 mb-2">
             <Clock className={`size-3.5 ${isCooldown ? 'text-muted-foreground/50' : 'text-muted-foreground'}`} />
             <span className={`text-xs ${isCooldown ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
-              {isCooldown ? (
-                <>Tournament starts in</>
-              ) : (
-                <>Tournament ends in</>
-              )}
+              {isCooldown ? 'Next tournament starts in' : 'Tournament ends in'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <TimeUnit value={time.days} label="days" dimmed={isCooldown} />
-            <span className={`font-bold text-lg mb-4 ${isCooldown ? 'text-muted-foreground/30' : 'text-muted-foreground'}`}>:</span>
-            <TimeUnit value={time.hours} label="hrs" dimmed={isCooldown} />
-            <span className={`font-bold text-lg mb-4 ${isCooldown ? 'text-muted-foreground/30' : 'text-muted-foreground'}`}>:</span>
-            <TimeUnit value={time.minutes} label="min" dimmed={isCooldown} />
-            <span className={`font-bold text-lg mb-4 ${isCooldown ? 'text-muted-foreground/30' : 'text-muted-foreground'}`}>:</span>
-            <TimeUnit value={time.seconds} label="sec" dimmed={isCooldown} />
+            <TimeUnit value={time.days} label="days" />
+            <span className="font-bold text-lg mb-4 text-muted-foreground">:</span>
+            <TimeUnit value={time.hours} label="hrs" />
+            <span className="font-bold text-lg mb-4 text-muted-foreground">:</span>
+            <TimeUnit value={time.minutes} label="min" />
+            <span className="font-bold text-lg mb-4 text-muted-foreground">:</span>
+            <TimeUnit value={time.seconds} label="sec" />
           </div>
         </div>
 
