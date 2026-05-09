@@ -15,7 +15,7 @@ export const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; s
   'hlx_10000': { hlx: 10000, starsPrice: 350 },
   'hlx_50000': { hlx: 50000, starsPrice: 1500 },
   'lev_2x': { leverage: 2, starsPrice: 250 },
-  'lev_5x': { leverage: 5, starsPrice: 500 },
+  'lev_5x': { leverage: 5, starsPrice: 1 },
   'lev_10x': { leverage: 10, starsPrice: 1000 },
 }
 
