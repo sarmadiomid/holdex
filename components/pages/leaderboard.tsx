@@ -36,19 +36,19 @@ export function Leaderboard() {
   const setLeaderboard = useAppStore((state) => state.setLeaderboard)
   const [loading, setLoading] = useState(true)
 
-  const prizePool = leaderboardData?.prizePool ?? 500
+  const prizePool = useAppStore((state) => state.prizePool)
   const distribution = leaderboardData?.distribution ?? []
   const totalParticipants = leaderboardData?.totalParticipants ?? 0
-  const weekEnd = leaderboardData?.weekEnd ?? new Date()
   const season = leaderboardData?.season ?? 1
   const userPosition = leaderboardData?.userPosition
 
-  const [time, setTime] = useState(formatTimeLeft(weekEnd))
+  const targetTime = prizePool.nextPhaseStartsAt
+  const [time, setTime] = useState(formatTimeLeft(new Date(targetTime)))
 
   useEffect(() => {
-    const id = setInterval(() => setTime(formatTimeLeft(weekEnd)), 1000)
+    const id = setInterval(() => setTime(formatTimeLeft(new Date(targetTime))), 1000)
     return () => clearInterval(id)
-  }, [weekEnd])
+  }, [targetTime])
 
   useEffect(() => {
     if (!isReady || !token) return
@@ -119,7 +119,7 @@ export function Leaderboard() {
                   <div className="flex items-center gap-1.5">
                     <Gem className="size-4 text-neon-cyan" />
                     <NeonText glow="gold" className="text-2xl font-bold font-mono">
-                      {prizePool.toLocaleString()}
+                      {prizePool.totalTon.toLocaleString()}
                     </NeonText>
                     <span className="text-sm text-muted-foreground font-medium">TON</span>
                   </div>
@@ -129,7 +129,7 @@ export function Leaderboard() {
               <div className="text-right">
                 <div className="flex items-center gap-1 justify-end mb-1">
                   <Clock className="size-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Ends in</span>
+                  <span className="text-xs text-muted-foreground">Start at:</span>
                 </div>
                 <div className="flex items-center gap-1 font-mono text-sm font-bold text-foreground">
                   <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.days).padStart(2, '0')}d</span>
@@ -137,6 +137,8 @@ export function Leaderboard() {
                   <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.hours).padStart(2, '0')}h</span>
                   <span className="text-muted-foreground">:</span>
                   <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.minutes).padStart(2, '0')}m</span>
+                  <span className="text-muted-foreground">:</span>
+                  <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.seconds).padStart(2, '0')}s</span>
                 </div>
               </div>
             </div>
