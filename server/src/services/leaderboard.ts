@@ -6,13 +6,9 @@ import mongoose from 'mongoose'
 
 const PRIZE_POOL_TON = 500
 const DISTRIBUTION = [
-  { rank: 1, percentage: 40, tonAmount: 200 },
-  { rank: 2, percentage: 25, tonAmount: 125 },
-  { rank: 3, percentage: 15, tonAmount: 75 },
-  { rank: 4, percentage: 10, tonAmount: 50 },
-  { rank: 5, percentage: 5, tonAmount: 25 },
-  { rank: 6, percentage: 3, tonAmount: 15 },
-  { rank: 7, percentage: 2, tonAmount: 10 },
+  { rank: 1, percentage: 50, tonAmount: 250 },
+  { rank: 2, percentage: 30, tonAmount: 150 },
+  { rank: 3, percentage: 20, tonAmount: 100 },
 ]
 
 function getCurrentSeason(): number {

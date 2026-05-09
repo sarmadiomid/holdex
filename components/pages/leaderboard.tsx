@@ -25,6 +25,10 @@ const rankStyles: Record<number, { text: string; bg: string; border: string; glo
   1: { text: 'text-neon-gold', bg: 'bg-neon-gold/20', border: 'border-neon-gold/60', glow: 'shadow-neon-gold/30' },
   2: { text: 'text-foreground', bg: 'bg-foreground/10', border: 'border-foreground/30' },
   3: { text: 'text-neon-pink', bg: 'bg-neon-pink/20', border: 'border-neon-pink/50', glow: 'shadow-neon-pink/20' },
+  4: { text: 'text-neon-cyan', bg: 'bg-neon-cyan/10', border: 'border-neon-cyan/30' },
+  5: { text: 'text-neon-cyan', bg: 'bg-neon-cyan/10', border: 'border-neon-cyan/30' },
+  6: { text: 'text-neon-cyan', bg: 'bg-neon-cyan/10', border: 'border-neon-cyan/30' },
+  7: { text: 'text-neon-cyan', bg: 'bg-neon-cyan/10', border: 'border-neon-cyan/30' },
 }
 
 export function Leaderboard() {
@@ -149,29 +153,28 @@ export function Leaderboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((rank) => {
-                const prize = getTonPrize(rank)
-                const styles = rankStyles[rank]
-                const labels = ['1st Place', '2nd Place', '3rd Place']
+            <div className="grid grid-cols-4 gap-2">
+              {distribution.map((d) => {
+                const styles = rankStyles[d.rank]
+                const labels = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th']
                 return (
                   <div
-                    key={rank}
+                    key={d.rank}
                     className={cn(
-                      'rounded-xl p-3 text-center border',
-                      styles.bg,
-                      styles.border,
-                      styles.glow && `shadow-lg ${styles.glow}`
+                      'rounded-xl p-2 text-center border',
+                      styles?.bg ?? 'bg-muted/30',
+                      styles?.border ?? 'border-border/30',
+                      styles?.glow && `shadow-lg ${styles.glow}`
                     )}
                   >
-                    <p className="text-xs text-muted-foreground mb-1">{labels[rank - 1]}</p>
+                    <p className="text-[10px] text-muted-foreground mb-1">{labels[d.rank - 1]}</p>
                     <div className="flex items-center justify-center gap-1">
-                      <Gem className={cn('size-3.5', styles.text)} />
-                      <span className={cn('text-base font-bold font-mono', styles.text)}>
-                        {prize ?? '—'}
+                      <Gem className={cn('size-3', styles?.text ?? 'text-muted-foreground')} />
+                      <span className={cn('text-sm font-bold font-mono', styles?.text ?? 'text-muted-foreground')}>
+                        {d.tonAmount}
                       </span>
                     </div>
-                    <p className={cn('text-xs font-medium', styles.text)}>TON</p>
+                    <p className={cn('text-[10px] font-medium', styles?.text ?? 'text-muted-foreground')}>TON</p>
                   </div>
                 )
               })}
@@ -325,6 +328,19 @@ export function Leaderboard() {
                         {userEntry.pnl >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
                         <span>{userEntry.pnl >= 0 ? '+' : ''}{userEntry.pnlPercent.toFixed(2)}%</span>
                       </div>
+                      {(() => {
+                        const prize = getTonPrize(userRank)
+                        if (prize === null) return null
+                        const pStyles = rankStyles[userRank]
+                        return (
+                          <div className="flex items-center gap-1">
+                            <Gem className={cn('size-3', pStyles?.text ?? 'text-muted-foreground')} />
+                            <span className={cn('text-xs font-bold font-mono', pStyles?.text ?? 'text-muted-foreground')}>
+                              {prize} TON
+                            </span>
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 </GlassCard>
