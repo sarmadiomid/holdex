@@ -9,6 +9,7 @@ import { connectDB } from './db/connect'
 import { setupSocketIO, getIo, broadcastAllPrices } from './services/socket'
 import { startTwelveData } from './services/twelveData'
 import { startLeaderboardCron } from './services/leaderboard'
+import { setupTelegramWebhook, getWebhookInfo } from './services/telegram'
 import authRoutes from './routes/auth'
 import allocationRoutes from './routes/allocation'
 import starsRoutes from './routes/stars'
@@ -199,6 +200,19 @@ async function bootstrap() {
       resolve()
     })
   })
+
+  if (env.TELEGRAM_WEBHOOK_URL) {
+    const webhookUrl = `${env.TELEGRAM_WEBHOOK_URL}/telegram-webhook`
+    const success = await setupTelegramWebhook(webhookUrl)
+    if (success) {
+      const info = await getWebhookInfo()
+      logger.info('Telegram webhook info', { info })
+    } else {
+      logger.warn('Failed to set Telegram webhook - payments may not work', { webhookUrl })
+    }
+  } else {
+    logger.warn('TELEGRAM_WEBHOOK_URL not set - Telegram webhook not configured')
+  }
 
   startTwelveData()
   startLeaderboardCron()

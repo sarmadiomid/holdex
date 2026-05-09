@@ -14,6 +14,56 @@ interface ChatMemberResponse {
   description?: string
 }
 
+interface SetWebhookResponse {
+  ok: boolean
+  result: boolean
+  description?: string
+}
+
+export async function setupTelegramWebhook(webhookUrl: string): Promise<boolean> {
+  try {
+    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/setWebhook`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: webhookUrl,
+        drop_pending_updates: true,
+      }),
+    })
+
+    const data: SetWebhookResponse = await response.json()
+
+    if (!data.ok) {
+      logger.error('Failed to set Telegram webhook', { error: data.description, webhookUrl })
+      return false
+    }
+
+    logger.info('Telegram webhook set successfully', { webhookUrl })
+    return true
+  } catch (error) {
+    logger.error('Error setting Telegram webhook', { error, webhookUrl })
+    return false
+  }
+}
+
+export async function getWebhookInfo(): Promise<{ webhook_url: string; has_custom_certificate: boolean; pending_update_count: number } | null> {
+  try {
+    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getWebhookInfo`
+    const response = await fetch(url)
+    const data = await response.json()
+
+    if (data.ok) {
+      return data.result
+    }
+    return null
+  } catch (error) {
+    logger.error('Error getting webhook info', { error })
+    return null
+  }
+}
+
 /**
  * Check if a user is a member of a Telegram channel/group
  * @param userId - Telegram user ID
