@@ -376,6 +376,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         endsAt: phaseEndsAt,
         phase,
         nextPhaseStartsAt,
+        season: data.season,
+        totalTon: data.prizePool,
+        distribution: data.distribution,
+        totalParticipants: data.totalParticipants,
       },
     }))
   },
