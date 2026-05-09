@@ -214,7 +214,7 @@ export function OnboardingTour() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] pointer-events-none"
       >
-        <div className="fixed inset-0 bg-black/70 pointer-events-auto" />
+        <div className="fixed inset-0 bg-black/50 pointer-events-auto" />
 
         {targetRect && (
           <>
@@ -230,7 +230,7 @@ export function OnboardingTour() {
             />
 
             <div
-              className="absolute bg-black/80 backdrop-blur-sm"
+              className="absolute bg-transparent"
               style={{
                 top: 0,
                 left: 0,
@@ -239,7 +239,7 @@ export function OnboardingTour() {
               }}
             />
             <div
-              className="absolute bg-black/80 backdrop-blur-sm"
+              className="absolute bg-transparent"
               style={{
                 top: 0,
                 left: targetRect.left + targetRect.width + 4,
@@ -248,7 +248,7 @@ export function OnboardingTour() {
               }}
             />
             <div
-              className="absolute bg-black/80 backdrop-blur-sm"
+              className="absolute bg-transparent"
               style={{
                 top: targetRect.top + targetRect.height + 4,
                 left: 0,
@@ -257,12 +257,48 @@ export function OnboardingTour() {
               }}
             />
             <div
-              className="absolute bg-black/80 backdrop-blur-sm"
+              className="absolute bg-transparent"
               style={{
                 top: targetRect.top + targetRect.height + 4,
                 left: targetRect.left + targetRect.width + 4,
                 width: window.innerWidth - targetRect.left - targetRect.width - 4,
                 height: window.innerHeight - targetRect.top - targetRect.height - 4
+              }}
+            />
+            <div
+              className="absolute bg-transparent"
+              style={{
+                top: targetRect.top + targetRect.height + 4,
+                left: targetRect.left,
+                width: targetRect.width,
+                height: window.innerHeight - targetRect.top - targetRect.height - 4
+              }}
+            />
+            <div
+              className="absolute bg-transparent"
+              style={{
+                top: targetRect.top,
+                left: 0,
+                width: targetRect.left,
+                height: targetRect.height
+              }}
+            />
+            <div
+              className="absolute bg-transparent"
+              style={{
+                top: targetRect.top,
+                left: targetRect.left + targetRect.width + 4,
+                width: window.innerWidth - targetRect.left - targetRect.width - 4,
+                height: targetRect.height
+              }}
+            />
+            <div
+              className="absolute bg-transparent"
+              style={{
+                top: targetRect.top,
+                left: targetRect.left,
+                width: targetRect.width,
+                height: targetRect.top
               }}
             />
           </>
