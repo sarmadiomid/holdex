@@ -46,6 +46,7 @@ export function Leaderboard() {
   const top15 = leaderboard.slice(0, 15)
   const userEntry = leaderboard.find(e => e.user.id === user.id)
   const showUserBelowTop15 = userRank > 15 && userEntry
+  const isUserInTop15 = userRank > 0 && userRank <= 15
 
   const targetTime = prizePool.nextPhaseStartsAt
   const [time, setTime] = useState(formatTimeLeft(new Date(targetTime)))
@@ -279,38 +280,54 @@ export function Leaderboard() {
 
           {showUserBelowTop15 && userEntry && (
             <>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-px bg-border/50" />
-                <span className="text-xs text-muted-foreground">Your ranking</span>
-                <div className="flex-1 h-px bg-border/50" />
+              <div className="flex items-center gap-2 my-3">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                <span className="text-xs text-muted-foreground font-medium px-2">Your Ranking</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-border via-border to-transparent" />
               </div>
               <motion.div
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
               >
-                <div className="glass rounded-xl p-3 flex items-center justify-between border-neon-cyan bg-neon-cyan/10">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 bg-neon-cyan/30 text-neon-cyan">
-                      {userRank}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="size-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <User className="size-4 text-muted-foreground" />
+                <GlassCard glow="cyan" className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-neon-cyan/10 via-transparent to-neon-pink/5 pointer-events-none" />
+                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-neon-cyan to-neon-pink rounded-l-xl" />
+                  
+                  <div className="relative flex items-center justify-between pl-2">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 rounded-xl bg-gradient-to-br from-neon-cyan/30 to-neon-pink/20 border border-neon-cyan/40 flex items-center justify-center text-base font-bold shrink-0 text-neon-cyan shadow-lg shadow-neon-cyan/20">
+                        #{userRank}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground leading-none mb-0.5">{userEntry.user.firstName}</p>
-                        <p className="text-xs text-muted-foreground">@{userEntry.user.username}</p>
+                      
+                      <div className="flex items-center gap-2.5">
+                        <div className="size-10 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center shrink-0 shadow-md">
+                          <span className="text-sm font-bold text-background">{userEntry.user.firstName.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-semibold text-foreground leading-none">{userEntry.user.firstName}</p>
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30">You</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">@{userEntry.user.username}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-end gap-1">
+                      <NeonText glow="cyan" className="text-base font-bold font-mono">
+                        {userEntry.portfolioValue.toLocaleString()}
+                      </NeonText>
+                      <div className={cn(
+                        'flex items-center gap-1 text-xs font-mono',
+                        userEntry.pnl >= 0 ? 'text-neon-green' : 'text-neon-pink'
+                      )}>
+                        {userEntry.pnl >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                        <span>{userEntry.pnl >= 0 ? '+' : ''}{userEntry.pnlPercent.toFixed(2)}%</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-0.5">
-                    <p className="text-sm font-mono text-foreground">{userEntry.portfolioValue.toLocaleString()}</p>
-                    <p className={cn('text-xs font-mono', userEntry.pnl >= 0 ? 'text-neon-green' : 'text-neon-pink')}>
-                      {userEntry.pnl >= 0 ? '+' : ''}{userEntry.pnlPercent.toFixed(2)}%
-                    </p>
-                  </div>
-                </div>
+                </GlassCard>
               </motion.div>
             </>
           )}

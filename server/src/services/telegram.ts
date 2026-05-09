@@ -169,6 +169,7 @@ export async function createStarsInvoiceLink(params: {
         title: params.title,
         description: params.description,
         payload: params.payload,
+        provider_token: '', // Required empty string for Telegram Stars payments
         currency: 'XTR', // XTR is the currency code for Telegram Stars
         prices: [{ label: 'Telegram Stars', amount: params.amount }],
       }),
