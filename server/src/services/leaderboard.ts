@@ -21,7 +21,8 @@ function getCurrentSeason(): number {
   const weekStart = new Date(now)
   weekStart.setUTCDate(now.getUTCDate() - dayOfWeek)
   weekStart.setUTCHours(0, 0, 0, 0)
-  return Math.floor(weekStart.getTime() / (7 * 24 * 60 * 60 * 1000))
+  const firstMonday2026 = new Date('2026-01-05T00:00:00Z')
+  return Math.floor((weekStart.getTime() - firstMonday2026.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1
 }
 
 export type TournamentPhase = 'active' | 'cooldown'
