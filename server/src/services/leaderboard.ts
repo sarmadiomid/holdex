@@ -22,7 +22,73 @@ function getCurrentSeason(): number {
   return Math.floor((now - epoch) / weekMs) + 1
 }
 
-function getWeekBoundaries(): { start: Date; end: Date } {
+export type TournamentPhase = 'active' | 'cooldown'
+
+export function getTournamentPhase(): TournamentPhase {
+  const now = new Date()
+  const dayOfWeek = now.getUTCDay()
+  const hour = now.getUTCHours()
+  
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return 'cooldown'
+  }
+  
+  if (dayOfWeek === 5 && hour >= 23) {
+    return 'cooldown'
+  }
+  
+  return 'active'
+}
+
+export function getCurrentPhaseEndTime(): Date {
+  const now = new Date()
+  const dayOfWeek = now.getUTCDay()
+  
+  const end = new Date(now)
+  
+  if (dayOfWeek === 5) {
+    end.setUTCHours(23, 59, 59, 999)
+  } else if (dayOfWeek === 6 || dayOfWeek === 0) {
+    const daysUntilFriday = (7 - dayOfWeek + 5) % 7
+    end.setUTCDate(now.getUTCDate() + daysUntilFriday)
+    end.setUTCHours(23, 59, 59, 999)
+  } else {
+    const daysUntilFriday = (5 - dayOfWeek + 7) % 7
+    if (daysUntilFriday === 0) {
+      end.setUTCHours(23, 59, 59, 999)
+    } else {
+      end.setUTCDate(now.getUTCDate() + daysUntilFriday)
+      end.setUTCHours(23, 59, 59, 999)
+    }
+  }
+  
+  return end
+}
+
+export function getNextPhaseStartTime(): Date {
+  const now = new Date()
+  const dayOfWeek = now.getUTCDay()
+  const hour = now.getUTCHours()
+  
+  const start = new Date(now)
+  
+  if (dayOfWeek === 5 && hour >= 23) {
+    start.setUTCDate(start.getUTCDate() + 3)
+    start.setUTCHours(0, 0, 0, 0)
+  } else if (dayOfWeek === 6) {
+    start.setUTCDate(start.getUTCDate() + 2)
+    start.setUTCHours(0, 0, 0, 0)
+  } else if (dayOfWeek === 0) {
+    start.setUTCDate(start.getUTCDate() + 1)
+    start.setUTCHours(0, 0, 0, 0)
+  } else {
+    start.setUTCHours(0, 0, 0, 0)
+  }
+  
+  return start
+}
+
+export function getWeekBoundaries(): { start: Date; end: Date } {
   const now = new Date()
   const dayOfWeek = now.getUTCDay()
   const start = new Date(now)
@@ -75,6 +141,9 @@ export async function calculateAndSaveLeaderboard(): Promise<void> {
 export async function getLeaderboard(limit = 500) {
   const season = getCurrentSeason()
   const { start, end } = getWeekBoundaries()
+  const phase = getTournamentPhase()
+  const phaseEndsAt = getCurrentPhaseEndTime()
+  const nextPhaseStartsAt = getNextPhaseStartTime()
 
   const [users, totalCount] = await Promise.all([
     User.find({ weekStart: { $gte: start } })
@@ -110,16 +179,27 @@ export async function getLeaderboard(limit = 500) {
     distribution: DISTRIBUTION,
     weekStart: start,
     weekEnd: end,
+    phase,
+    phaseEndsAt,
+    nextPhaseStartsAt,
     entries,
   }
 }
 
 export function startLeaderboardCron() {
-  cron.schedule('0 0 * * 0', async () => {
-    logger.info('Weekly leaderboard cron triggered')
+  cron.schedule('59 23 * * 5', async () => {
+    logger.info('Friday archive cron triggered - saving final leaderboard')
     try {
       await calculateAndSaveLeaderboard()
+      logger.info('Friday archive completed')
+    } catch (error) {
+      logger.error('Friday archive cron failed', { error })
+    }
+  })
 
+  cron.schedule('0 0 * * 0', async () => {
+    logger.info('Weekly reset cron triggered')
+    try {
       await User.updateMany(
         {},
         {
@@ -136,7 +216,7 @@ export function startLeaderboardCron() {
 
       logger.info('Weekly reset completed')
     } catch (error) {
-      logger.error('Weekly leaderboard cron failed', { error })
+      logger.error('Weekly reset cron failed', { error })
     }
   })
 }

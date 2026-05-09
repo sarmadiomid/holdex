@@ -195,7 +195,9 @@ export const mockPrizePool: PrizePool = {
   ],
   endsAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now (weekly)
   totalParticipants: 1247,
-  season: 12
+  season: 12,
+  phase: 'active',
+  nextPhaseStartsAt: Date.now() + 7 * 24 * 60 * 60 * 1000
 }
 
 // Price simulation helpers

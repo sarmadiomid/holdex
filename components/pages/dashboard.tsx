@@ -19,11 +19,32 @@ export function Dashboard() {
   const applySellResult = useAppStore((state) => state.applySellResult)
   const positionHistory = useAppStore((state) => state.positionHistory)
   const setPositionHistory = useAppStore((state) => state.setPositionHistory)
+  const setLeaderboard = useAppStore((state) => state.setLeaderboard)
   const totalAllocated = Object.values(allocations).reduce((sum, val) => sum + val, 0)
   const [selling, setSelling] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [sellError, setSellError] = useState<string | null>(null)
   const [loadingHistory, setLoadingHistory] = useState(true)
+
+  useEffect(() => {
+    if (!token) return
+
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/leaderboard?limit=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setLeaderboard(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch leaderboard:', err)
+      }
+    }
+
+    fetchLeaderboard()
+  }, [token, setLeaderboard])
 
   useEffect(() => {
     if (!token) return

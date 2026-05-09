@@ -7,6 +7,7 @@ import { allocationLimiter } from '../middleware/rateLimit'
 import { validate } from '../middleware/validate'
 import { validateAllocations } from '../services/portfolio'
 import { recalcAndBroadcastUser, broadcastAllocationUpdate, broadcastUserUpdate, getLatestPrices } from '../services/socket'
+import { getTournamentPhase } from '../services/leaderboard'
 import { logger } from '../utils/logger'
 
 const router = Router()
@@ -31,6 +32,11 @@ router.post(
     try {
       const { telegramId } = req
       const allocations = req.body as { BTC: number; GOLD: number; EUR: number }
+
+      const phase = getTournamentPhase()
+      if (phase === 'cooldown') {
+        return res.status(403).json({ error: 'Tournament is currently in cooldown phase. Allocations are disabled until the next tournament starts.' })
+      }
 
       const validation = validateAllocations(allocations)
       if (!validation.valid) {
@@ -113,6 +119,12 @@ router.get('/allocation', authMiddleware, async (req: AuthRequest, res) => {
 router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const { telegramId } = req
+
+    const phase = getTournamentPhase()
+    if (phase === 'cooldown') {
+      return res.status(403).json({ error: 'Tournament is currently in cooldown phase. Selling is disabled until the next tournament starts.' })
+    }
+
     const user = await User.findOne({ telegramId })
     if (!user) {
       return res.status(404).json({ error: 'User not found' })

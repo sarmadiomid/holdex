@@ -62,9 +62,11 @@ export interface PrizePool {
     percentage: number
     tonAmount: number // Prize in TON
   }[]
-  endsAt: number // Timestamp when weekly tournament ends
+  endsAt: number // Timestamp when current phase ends
   totalParticipants: number
   season: number // Weekly season number
+  phase: 'active' | 'cooldown'
+  nextPhaseStartsAt: number // Timestamp when next phase starts
 }
 
 // Telegram types

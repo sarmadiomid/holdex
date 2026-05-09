@@ -76,7 +76,11 @@ interface AppState {
       pnlPercent: number
       rank: number | null
     } | null
+    phase?: 'active' | 'cooldown'
+    phaseEndsAt?: string
+    nextPhaseStartsAt?: string
   }) => void
+  syncPrizePoolWithPhase: (phase: 'active' | 'cooldown', phaseEndsAt: string, nextPhaseStartsAt: string) => void
   setLeverage: (leverage: number) => void
   setAssetLeverage: (assetId: AssetType, leverage: number) => void
   setPositionHistory: (history: PositionHistoryEntry[]) => void
@@ -341,7 +345,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       pnlPercent: e.pnlPercent,
     }))
 
-    set({
+    const phase = data.phase || 'active'
+    const phaseEndsAt = data.phaseEndsAt ? new Date(data.phaseEndsAt).getTime() : Date.now() + 7 * 24 * 60 * 60 * 1000
+    const nextPhaseStartsAt = data.nextPhaseStartsAt ? new Date(data.nextPhaseStartsAt).getTime() : phaseEndsAt
+
+    set((state) => ({
       leaderboard: entries,
       leaderboardData: {
         season: data.season,
@@ -353,7 +361,24 @@ export const useAppStore = create<AppState>((set, get) => ({
         entries,
         userPosition: data.userPosition,
       },
-    })
+      prizePool: {
+        ...state.prizePool,
+        endsAt: phaseEndsAt,
+        phase,
+        nextPhaseStartsAt,
+      },
+    }))
+  },
+
+  syncPrizePoolWithPhase: (phase, phaseEndsAt, nextPhaseStartsAt) => {
+    set((state) => ({
+      prizePool: {
+        ...state.prizePool,
+        phase,
+        endsAt: new Date(phaseEndsAt).getTime(),
+        nextPhaseStartsAt: new Date(nextPhaseStartsAt).getTime(),
+      },
+    }))
   },
 
   setLeverage: (leverage) => {
