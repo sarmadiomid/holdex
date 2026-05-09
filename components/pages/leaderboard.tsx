@@ -109,7 +109,7 @@ export function Leaderboard() {
           <div className="absolute inset-0 bg-gradient-to-br from-neon-gold/10 via-transparent to-neon-cyan/5 pointer-events-none" />
           <div className="relative flex flex-col gap-4">
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="size-11 rounded-xl bg-neon-gold/20 border border-neon-gold/40 flex items-center justify-center">
                   <Trophy className="size-5 text-neon-gold" />
@@ -126,19 +126,19 @@ export function Leaderboard() {
                 </div>
               </div>
 
-              <div className="text-right">
-                <div className="flex items-center gap-1 justify-end mb-1">
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1 mb-1">
                   <Clock className="size-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Start at:</span>
                 </div>
-                <div className="flex items-center gap-1 font-mono text-sm font-bold text-foreground">
-                  <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.days).padStart(2, '0')}d</span>
+                <div className="flex items-center gap-0.5 font-mono text-xs font-medium text-foreground">
+                  <span>{String(time.days).padStart(2, '0')}d</span>
                   <span className="text-muted-foreground">:</span>
-                  <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.hours).padStart(2, '0')}h</span>
+                  <span>{String(time.hours).padStart(2, '0')}h</span>
                   <span className="text-muted-foreground">:</span>
-                  <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.minutes).padStart(2, '0')}m</span>
+                  <span>{String(time.minutes).padStart(2, '0')}m</span>
                   <span className="text-muted-foreground">:</span>
-                  <span className="px-1.5 py-0.5 rounded bg-muted/40">{String(time.seconds).padStart(2, '0')}s</span>
+                  <span>{String(time.seconds).padStart(2, '0')}s</span>
                 </div>
               </div>
             </div>
