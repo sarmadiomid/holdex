@@ -4,7 +4,20 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.telegram.org',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.telegram-cdn.org',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.telega.one',
+      },
+    ],
   },
   async headers() {
     return [

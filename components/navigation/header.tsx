@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { NeonText } from '@/components/ui/neon-text'
@@ -52,7 +53,7 @@ export function Header({ onProfileClick }: HeaderProps) {
             className="size-9 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center cursor-pointer hover:shadow-lg hover:shadow-neon-cyan/20 transition-shadow"
           >
             {user.photoUrl ? (
-              <img src={user.photoUrl} alt={user.firstName} className="size-full rounded-full object-cover" />
+              <Image src={user.photoUrl} alt={user.firstName} width={36} height={36} className="size-full rounded-full object-cover" />
             ) : (
               <span className="text-sm font-bold text-background">
                 {user.firstName?.charAt(0)?.toUpperCase() ?? '?'}

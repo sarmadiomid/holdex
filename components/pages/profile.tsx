@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X, User, Wallet, TrendingUp, Trophy, Users, Copy, Check, LogOut, Settings } from 'lucide-react'
@@ -104,7 +105,7 @@ export function Profile({ onClose }: ProfileProps) {
               <div className="flex items-center gap-4 mb-4">
                 <div className="size-20 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center">
                   {user.photoUrl ? (
-                    <img src={user.photoUrl} alt={user.firstName} className="size-full rounded-full object-cover" />
+                    <Image src={user.photoUrl} alt={user.firstName} width={80} height={80} className="size-full rounded-full object-cover" />
                   ) : (
                     <span className="text-3xl font-bold text-background">
                       {user.firstName?.charAt(0)?.toUpperCase() ?? '?'}

@@ -1,63 +1,77 @@
 # Release Readiness Audit Report
 
 **Generated:** May 11, 2026
-**Overall Release Readiness Score:** 52/100
+**Auditor:** Senior Full-Stack Engineer / Product Manager / Growth Marketer
+**Overall Release Readiness Score:** 62/100
+
+---
 
 ## Executive Summary
 
-Holdex is a Telegram Mini App investment simulator with a cyberpunk neon UI. The app features real-time price feeds via TwelveData, a weekly tournament leaderboard with TON prizes, Telegram Stars monetization, and a referral system. While the core gameplay loop is functional and visually polished, the codebase has **significant security vulnerabilities**, **zero test coverage**, **no error boundaries**, **hardcoded secrets**, and **incomplete Telegram Mini App compliance** that must be addressed before production release. The backend architecture is solid with proper JWT auth, rate limiting, and MongoDB persistence, but the frontend has technical debt that could cause crashes and security incidents in production.
+Holdex is a Telegram Mini App investment simulator with a cyberpunk neon UI, real-time price feeds via TwelveData, weekly leaderboard tournaments with TON prizes, and Telegram Stars payments. The codebase demonstrates solid architectural decisions (Next.js + Express + MongoDB + Socket.IO) and good Telegram SDK integration. However, it has significant pre-release gaps: no automated testing, missing CSRF protection, no Redis caching, hardcoded English strings, basic rate limiting, and several potential race conditions in financial operations. The app is functionally complete but requires hardening before production scale.
 
 ---
 
-## 🔴 Critical Blockers (9 items)
+## 🔴 Critical Blockers (12 items)
 
 | # | Issue | File/Location | Why Critical | Fix Required |
 |---|-------|---------------|--------------|--------------|
-| 1 | **Hardcoded API Key Exposed** | `test-websocket.js:4` | TwelveData API key `b23e7156a3c149c89e9f86b8c11df8b4` is committed to repo. Anyone can consume API quota or access paid data. | **[FIXED]** File removed from repo. **Action still required:** rotate the API key on TwelveData dashboard in case it was scraped before deletion. |
-| 2 | **TypeScript Build Errors Suppressed** | `next.config.mjs:3-5` | `ignoreBuildErrors: true` hides type errors that could cause runtime crashes. | **[FIXED]** `ignoreBuildErrors` is already `false`. `setTourCompleted` is present in the `AppState` interface (`lib/store.ts:56`). |
-| 3 | **CORS Allows Any Origin in Production** | `server/src/index.ts:44-60` | The `origin` callback falls back to `callback(null, true)` on line 55, allowing any domain to hit the API. Enables CSRF and unauthorized cross-origin requests. | **[FIXED]** Fallback changed to `callback(null, false)`. Wildcard `.vercel.app$` regex removed. Only `FRONTEND_URL` and `ALLOWED_ORIGINS` env var origins are permitted. |
-| 4 | **No Root README.md** | Repository root | New developers and DevOps teams cannot understand the project structure, setup, or deployment without documentation. | Create comprehensive `README.md` with setup, architecture, and deployment instructions. |
-| 5 | **No React Error Boundaries** | Entire frontend | Any unhandled exception in a component (e.g., `user.firstName.charAt(0)` in `header.tsx:58` if `firstName` is undefined) will crash the entire app shell. | **[FIXED]** Added `app/error.tsx` (catches page-level errors) and `app/global-error.tsx` (catches root layout errors). Also hardened `header.tsx`, `profile.tsx`, and `leaderboard.tsx` against `.charAt(0)` crashes with optional chaining. |
-| 6 | **Mock Data Returned as Real Data** | `server/src/routes/allocation.ts:285-308` | When a user has no position history, the server returns fabricated mock trades (`mock-1`, `mock-2`) as if they were real. This is deceptive and violates trust. | **[FIXED]** Mock fallback removed. Returns `{ history: [] }` when no positions exist. |
-| 7 | **No Telegram initData Expiration Check** | `server/src/services/auth.ts:3-41` | `validateTelegramInitData` verifies HMAC but never checks `auth_date` freshness. Old/stolen initData strings can be replayed indefinitely. | **[FIXED]** `auth_date` is validated after HMAC. initData older than 24 hours is rejected with `{ valid: false }`. |
-| 8 | **Images Use Raw `<img>` Tags** | `components/navigation/header.tsx:55`, `components/pages/profile.tsx:107` | Bypasses Next.js image optimization, causes layout shift, no fallback handling, and potential HTTP mixed-content issues. | Replace with `next/image` or add proper `onError` fallbacks, width/height attributes. |
-| 9 | **No Content Security Policy** | `app/layout.tsx:55` | External Telegram script loaded without `integrity`, `nonce`, or CSP headers. XSS risk if Telegram CDN is compromised. | Add CSP meta tag or helmet config; add `integrity` attribute to Telegram script. |
+| 1 | **Images unoptimized** | `next.config.mjs:7` | `images.unoptimized: true` disables Next.js image optimization, causing large payload sizes and slow loads on mobile networks. | Remove this line; use `next/image` with proper sizing. |
+| 2 | **No CSRF protection** | `server/src/index.ts:88-221` | Telegram webhook and API endpoints lack CSRF tokens. While auth uses JWT, state-changing POSTs without CSRF are vulnerable to cross-origin attacks. | Add CSRF token validation for non-Telegram webhook routes or use SameSite cookies. |
+| 3 | **No database transactions** | `server/src/routes/allocation.ts:65-84`, `server/src/services/referral.ts:34-68` | Multi-step financial operations (save user + create position + update referrer) are not atomic. A crash mid-operation creates data inconsistency. | Wrap multi-step financial ops in MongoDB transactions (`session.startTransaction()`). |
+| 4 | **Optimistic update without rollback** | `lib/store.ts:403-427` | `setAssetLeverage` updates UI optimistically but only logs errors on backend failure — no rollback. Users see wrong leverage. | Add rollback logic in `.catch()` to revert the store state. |
+| 5 | **Position history PnL bug** | `server/src/routes/allocation.ts:289-316` | When calculating fallback PnL, code searches `idx + 1` in an array sorted `createdAt: -1`, meaning it looks at **newer** records, not the original allocation. PnL will be incorrect for old records. | Reverse search direction or use a proper correlation query. |
+| 6 | **`lev_5x` costs 1 Star** | `server/src/routes/stars.ts:18` | The 5x leverage package is priced at 1 Star instead of a realistic value. This is likely a debug value left in production code. | Set correct price (e.g., 500+ Stars) before release. |
+| 7 | **No error tracking** | Entire project | No Sentry, Bugsnag, or similar integration. Production errors are only logged to console/files which are ephemeral on Render free tier. | Add Sentry or Datadog for frontend + backend error tracking. |
+| 8 | **JWT 30-day expiry, no refresh** | `server/src/routes/auth.ts:87-91` | Tokens valid for 30 days with no refresh mechanism. Compromised tokens have a 30-day window. Users must re-auth after 30 days with no warning. | Implement refresh token rotation or reduce expiry to 24h with refresh. |
+| 9 | **No HTTPS enforcement** | `server/src/index.ts:28-62` | No HSTS header, no redirect from HTTP to HTTPS. Telegram Mini Apps require HTTPS. | Add `strict-transport-security` header and HTTP→HTTPS redirect. |
+| 10 | **Missing `start_param` abuse validation** | `server/src/services/auth.ts:67-78` | Referral `start_param` is parsed but never validated for format (max 512 chars, allowed chars). Could be used for injection. | Add regex validation: `/^[A-Za-z0-9_-]{1,512}$/`. |
+| 11 | **No automated tests** | Entire project | Zero unit tests, integration tests, or E2E tests. Every release is a manual QA risk. | Add Jest/Vitest for backend, React Testing Library for frontend, and at least 1 E2E smoke test. |
+| 12 | **Hardcoded bot username** | `components/pages/earn.tsx:34`, `components/pages/profile.tsx:32` | Referral links hardcode `holdextest_bot` which is a test bot name. Will break in production. | Move to environment variable: `NEXT_PUBLIC_BOT_USERNAME`. |
 
 ---
 
-## 🟡 Important Issues (14 items)
+## 🟡 Important Issues (18 items)
 
 | # | Issue | File/Location | Impact | Recommended Fix |
 |---|-------|---------------|--------|-----------------|
-| 1 | **Zero Test Coverage** | Entire project | No unit, integration, or E2E tests. Regressions will reach production undetected. | Add Vitest/Jest for unit tests, Supertest for API tests, and at least one E2E flow (e.g., auth → allocate → sell). |
-| 2 | **No Error Tracking/Monitoring** | Entire project | Production crashes and API failures are invisible. No Sentry, LogRocket, or Datadog. | Integrate Sentry on frontend and backend. Add performance monitoring. |
-| 3 | **Artificial Loading Delay** | `components/app-shell.tsx:37` | 2.5 second fake loading animation hurts perceived performance and frustrates users on fast connections. | **[FIXED]** Reduced to 600ms. Screen still dismisses immediately once auth completes; timer only controls the progress bar animation speed. |
-| 4 | **No Internationalization** | All page components | 100% hardcoded English strings. Telegram has 700M+ non-English users. Blocks global growth. | Integrate `i18next` or `next-intl`. Extract all UI strings. Use Telegram's `language_code` as default. |
-| 5 | **No Offline/Poor Connection Handling** | Frontend fetch calls | All `fetch` calls silently fail or show generic "Network error" with no retry. Users on poor mobile networks get stuck. | Add `fetch` wrapper with exponential backoff retry (3 attempts). Show offline state UI. |
-| 6 | **Duplicate Global CSS** | `app/globals.css` and `styles/globals.css` | Two nearly identical CSS files create confusion. `app/globals.css` is imported; `styles/globals.css` appears unused but could conflict. | **[FIXED]** `styles/globals.css` deleted. `app/globals.css` is the single source of truth. |
-| 7 | **No Rate Limit on Leaderboard** | `server/src/routes/leaderboard.ts:9` | `authMiddleware` is present but no dedicated rate limiter. High-traffic apps can spam expensive aggregation queries. | Add `generalLimiter` or a specific leaderboard rate limit (e.g., 30 req/min). |
-| 8 | **No API Retry/Debounce on Sliders** | `components/allocation/allocation-slider.tsx:74-77` | Every slider micro-movement triggers `haptic.selection()` and state updates. Rapid dragging can cause performance issues. | Debounce slider `onValueChange` by 100-200ms. |
-| 9 | **No Input Sanitization on Webhook** | `server/src/index.ts:69-181` | Telegram webhook parses `req.body` directly. While `zod` is used elsewhere, the webhook handler lacks schema validation for the entire Telegram `Update` object. | **[FIXED]** Added `WebhookBodySchema` (validates `update_id`, optional `pre_checkout_query`/`message.successful_payment`) and `PayloadSchema` (validates `packageId` + `telegramId`). Invalid payloads are logged and return `{ ok: true }` to Telegram without reaching business logic. |
-| 10 | **Referral Link Uses Test Bot** | `components/pages/earn.tsx:34`, `components/pages/profile.tsx:32` | Hardcoded `https://t.me/holdextest_bot/holdex?startapp=...` must be updated to production bot before release. | Move bot username to env var `NEXT_PUBLIC_BOT_USERNAME`. |
-| 11 | **Missing `setTourCompleted` in Interface** | `lib/store.ts` (interface block) | The store implementation defines `setTourCompleted` on line 134, but it is absent from the `AppState` interface (lines 18-90). TypeScript strict mode would catch this if enabled. | **[NOT AN ISSUE]** `setTourCompleted: () => void` is already present at `lib/store.ts:56`. |
-| 12 | **No Graceful Shutdown for WebSocket** | `server/src/services/twelveData.ts` | On SIGTERM, the TwelveData WebSocket may not close cleanly, leaving dangling connections and potential memory leaks. | Call `stopTwelveData()` in the SIGTERM/SIGINT handlers in `index.ts`. |
-| 13 | **Unused Toast System** | `hooks/use-toast.ts`, `components/ui/use-toast.ts` | Identical duplicate toast utilities exist but are never imported by any page component. Dead code adds bundle bloat. | **[FIXED]** Removed `hooks/use-toast.ts`, `components/ui/use-toast.ts`, `components/ui/toast.tsx`, `components/ui/toaster.tsx`, and `components/ui/sonner.tsx`. Verified zero imports across the entire codebase. |
-| 14 | **No HTTPS/HSTS Enforcement** | `server/src/index.ts` | No redirect from HTTP to HTTPS, no HSTS header. Telegram Mini Apps require HTTPS. | Add helmet HSTS config and HTTP→HTTPS redirect middleware for production. |
+| 1 | **No Redis caching** | Entire backend | Every leaderboard query hits MongoDB. No price caching. Will degrade under load. | Add Redis for price snapshots and leaderboard caching with 60s TTL. |
+| 2 | **No rate limit per user** | `server/src/middleware/rateLimit.ts:4-10` | General limiter is IP-based. A user with rotating IPs can bypass. | Add per-telegramId rate limiting for auth and allocation endpoints. |
+| 3 | **No input sanitization on queries** | `server/src/routes/leaderboard.ts:11` | `parseInt(req.query.limit)` can be exploited with large values (DoS). | Add `limit` cap (max 100) and validate with Zod. |
+| 4 | **No debouncing on sliders** | `components/allocation/allocation-slider.tsx:74-77` | Every slider tick triggers a haptic and state update. Expensive on low-end devices. | Debounce `handleValueChange` by 150ms. |
+| 5 | **No retry logic for API calls** | `components/app-shell.tsx:164-188` | Auth and data fetches have no retry. A single network blip breaks the app. | Add exponential backoff retry (3 attempts) for critical fetches. |
+| 6 | **Hardcoded English strings** | All `.tsx` files | 100% of UI text is hardcoded English. Telegram users speak 100+ languages. | Implement `next-i18n` or `react-intl` with at least Russian, Spanish, and Persian. |
+| 7 | **No RTL support** | `app/layout.tsx:53` | `lang="en"` with no RTL detection. Arabic/Persian users will have broken layout. | Add `dir="auto"` or dynamic RTL detection. |
+| 8 | **No offline handling** | Entire frontend | No service worker, no offline state. App crashes if connection drops during allocation. | Add basic offline detection with a "Reconnecting" banner. |
+| 9 | **Missing `BackButton` handling** | `hooks/use-telegram.ts` | `webApp.BackButton` is never configured. Users cannot navigate back naturally in Telegram. | Show/hide BackButton when profile or modals are open; attach `onClick` handler. |
+| 10 | **No skeleton screens** | `components/pages/dashboard.tsx:263-266` | Loading states are text-only ("Loading history..."). Poor perceived performance. | Add shimmer/skeleton placeholders for cards and lists. |
+| 11 | **No CloudStorage usage** | `lib/store.ts` | Tour completion uses `localStorage`, which is cleared when Telegram WebView resets. | Use `webApp.CloudStorage` for persistent per-user state. |
+| 12 | **Weekly reset doesn't reset balance** | `server/src/services/leaderboard.ts:202-214` | `User.updateMany` resets allocations and PnL but does NOT reset `balance` to 100. Users keep their HLX across weeks, breaking tournament fairness. | Reset `balance: 100` in the weekly cron or implement separate "tournament wallet". |
+| 13 | **No admin dashboard** | Entire project | No way to monitor active users, fraud, or system health beyond logs. | Add a protected `/admin` route with key metrics and manual intervention tools. |
+| 14 | **No analytics events** | Entire frontend | Only Vercel Analytics (page views). No custom events for purchases, allocations, or task completions. | Add Amplitude/Mixpanel or Google Analytics 4 event tracking. |
+| 15 | **Winston logs to local files** | `server/src/utils/logger.ts:18-20` | On Render free tier, local files are ephemeral. Errors are lost on restart. | Add Winston transport for external log aggregation (Datadog, Papertrail). |
+| 16 | **Missing `viewport-fit=cover`** | `app/layout.tsx:39-45` | Viewport meta lacks `viewport-fit=cover`, causing content to be hidden under dynamic islands/notches. | Add `viewport-fit: 'cover'` to viewport export. |
+| 17 | **No PWA manifest** | `public/` | No `manifest.json` or service worker. Cannot be installed as PWA. | Add a minimal manifest for installability. |
+| 18 | **Zustand store not persisted** | `lib/store.ts` | On app reload, all state resets. User sees loading screen again. | Persist `token` and `isTourCompleted` to `CloudStorage` or `localStorage`. |
 
 ---
 
-## 🟢 Nice to Have (8 items)
+## 🟢 Nice to Have (14 items)
 
-| # | Issue | Recommended Fix |
-|---|-------|-----------------|
-| 1 | **No PWA/Service Worker** | Add a minimal service worker for offline asset caching and app installability. |
-| 2 | **No CloudStorage Usage** | Use `Telegram.WebApp.CloudStorage` to persist user preferences (tour completion, last tab) across sessions without backend dependency. |
-| 3 | **No Analytics Beyond Vercel** | Add Amplitude, Mixpanel, or Google Analytics 4 to track funnel conversion (auth → first allocation → store purchase). |
-| 4 | **No Dark/Light Theme Toggle** | The app forces a cyberpunk dark theme. Respect `Telegram.WebApp.themeParams` for better native feel. |
-| 5 | **No Custom 404/Error Pages** | Add `app/not-found.tsx` and `app/error.tsx` for better UX on navigation failures. |
-| 6 | **Bundle Size: Framer Motion + Recharts** | Audit bundle with `@next/bundle-analyzer`. Consider lazy-loading `recharts` and `framer-motion` if not critical for first paint. |
-| 7 | **No In-App Update Notification** | When deploying new versions, users may cache the old JS. Add a version check mechanism to prompt reload. |
-| 8 | **No Accessibility (a11y) Audit** | Add `aria-label` attributes to icon buttons, ensure color contrast ratios meet WCAG 2.1 AA. |
+1. **Code splitting per tab** — `app-shell.tsx` imports all 5 tabs eagerly. Use `React.lazy()` for non-dashboard tabs.
+2. **Reduce animation complexity** — Heavy `framer-motion` animations (glows, orbs) drain battery. Add `prefers-reduced-motion` support.
+3. **Image lazy loading** — User avatars (`photoUrl`) and icons load eagerly. Add `loading="lazy"`.
+4. **Dark/light theme toggle** — Currently forced dark. Respect Telegram's `themeParams` fully.
+5. **Web Vitals monitoring** — Add `web-vitals` library to track LCP, CLS, INP.
+6. **A/B testing framework** — No infra to test onboarding variants or pricing changes.
+7. **In-app changelog** — No way to communicate updates to users.
+8. **Referral QR code generation** — Users could share via QR in addition to link copy.
+9. **Bot commands** — `/start`, `/help`, `/leaderboard` commands not implemented.
+10. **Push notification strategy** — No bot-driven re-engagement (e.g., "Tournament ends in 1 hour!").
+11. **Social proof elements** — No "X users joined today" or live activity feed.
+12. **Accessibility audit** — Neon colors may fail WCAG contrast ratios. Audit with axe-core.
+13. **Bundle analysis** — Run `next-bundle-analyzer` to find heavy dependencies.
+14. **API documentation** — No OpenAPI/Swagger spec for the backend.
 
 ---
 
@@ -65,133 +79,239 @@ Holdex is a Telegram Mini App investment simulator with a cyberpunk neon UI. The
 
 ### 1. 🏗️ Architecture & Code Quality
 
-**Overall:** The architecture is a standard Next.js frontend + Express backend with Socket.IO. Separation of concerns is reasonable, but there are type safety gaps and dead code.
+**Strengths:**
+- Clean separation of concerns: Next.js frontend + Express backend + MongoDB.
+- Zod validation on all backend routes.
+- TypeScript strict mode enabled.
+- Good use of custom hooks (`useTelegram`, `useSocket`).
+- Consistent file naming and component structure.
 
-- **Component Structure:** Components are well-organized into `pages/`, `dashboard/`, `navigation/`, `ui/`, and `allocation/`. The `app-shell.tsx` acts as a layout controller.
-- **Code Smells:**
-  - `colorMap` object is duplicated across `asset-card.tsx`, `allocation-slider.tsx`, and `dashboard.tsx`. Extract to a shared helper.
-  - `BACKEND_URL` is hardcoded/redeclared in every page component (`dashboard.tsx:12`, `allocate.tsx:14`, `earn.tsx:13`, etc.) instead of using a shared API client.
-  - `assetIcons` map is duplicated in `asset-card.tsx:16-20` and `allocation-slider.tsx:16-20`.
-  - `TWELVE_DATA_TO_ASSET` and `VOLATILITY_MULTIPLIER` logic is duplicated between frontend (`lib/store.ts:199`) and backend (`server/src/services/portfolio.ts:1-4`).
-- **TypeScript Issues:**
-  - `next.config.mjs:4` has `ignoreBuildErrors: false` — correct.
-  - `lib/store.ts:162` uses `userData: any` in `setAuthenticatedUser`.
-- **Dead Code (Fixed):**
-  - `styles/globals.css` deleted.
-  - `test-websocket.js` removed from repo.
-  - Toast system (`hooks/use-toast.ts`, `components/ui/use-toast.ts`, `toast.tsx`, `toaster.tsx`, `sonner.tsx`) removed after verifying zero imports.
+**Weaknesses:**
+- **Anti-pattern:** `useAppStore` is accessed inside `useEffect` without selectors, causing unnecessary re-renders (`components/app-shell.tsx`).
+- **Code smell:** `colorMap` is duplicated in `asset-card.tsx`, `allocation-slider.tsx`, and `dashboard.tsx`. Extract to shared utility.
+- **Dead code:** `@radix-ui/react-context-menu`, `@radix-ui/react-menubar`, `@radix-ui/react-navigation-menu` are installed but unused.
+- **Commented-out code:** None found, but several `console.log` debug statements in production paths (`app-shell.tsx:21-24`, `store.tsx:417`).
+- **Inconsistent error handling:** Frontend uses both `alert()` and toast-less error states.
 
 ### 2. 🔐 Security
 
-**Overall:** The backend has good security practices (JWT, rate limiting, Helmet), but the frontend and deployment configuration have serious gaps.
+**Strengths:**
+- Telegram `initData` HMAC validation is implemented correctly (`services/auth.ts:21-33`).
+- JWT secret required (min 32 chars) via Zod env validation.
+- Helmet.js enabled for security headers.
+- `express-rate-limit` configured.
+- Input validation with Zod on all routes.
 
-- **Exposed Secrets (Fixed):** `test-websocket.js` deleted from repo. **Action still required:** rotate the TwelveData API key in case it was scraped.
-- **CORS Misconfiguration (Fixed):** `server/src/index.ts:55` no longer allows all origins. Fallback is `callback(null, false)`. Wildcard `.vercel.app$` regex removed.
-- **initData Validation (Fixed):** `server/src/services/auth.ts` now checks `auth_date` freshness. initData older than 24 hours is rejected.
-- **Input Validation (Fixed):** Telegram webhook (`index.ts:69`) now validates the full Telegram `Update` shape with Zod (`WebhookBodySchema`) and the invoice payload with `PayloadSchema`.
-- **XSS Risk:** The Telegram WebApp script (`app/layout.tsx:55`) is loaded without `integrity` or CSP. User-generated content (e.g., `user.firstName`) is rendered directly in JSX, but React's default escaping provides baseline protection.
-- **JWT Security:** Tokens expire in 30 days (`server/src/routes/auth.ts:87`). Consider shorter expiry with refresh tokens.
-- **Rate Limiting:** `authLimiter` (20 per 15min), `allocationLimiter` (10 per min), and `generalLimiter` (100 per min) are well-configured. However, `/api/leaderboard` lacks a specific limiter.
+**Weaknesses:**
+- **CRITICAL:** No CSRF tokens. JWT in `Authorization` header is safe from CSRF, but if cookies are ever introduced, this becomes a vulnerability.
+- **CRITICAL:** `images.unoptimized: true` removes Next.js built-in XSS protection for images.
+- `Content-Security-Policy` in `next.config.mjs` allows `'unsafe-inline'` for scripts, which weakens XSS defense.
+- No SQL/NoSQL injection protection audit beyond Mongoose schemas (generally safe, but complex queries should be reviewed).
+- The `generalLimiter` is 100 req/min in production — generous for a financial app.
 
 ### 3. ⚡ Performance
 
-**Overall:** The app loads a heavy animation library (Framer Motion) globally and uses artificial delays. Real-world performance on 3G/mobile will suffer.
+**Strengths:**
+- Socket.IO for real-time price updates avoids polling overhead.
+- `transports: ['polling', 'websocket']` fallback is sensible for mobile networks.
+- `AnimatePresence` with `mode="wait"` prevents layout thrashing during tab switches.
 
-- **Bundle Size:** Dependencies include `framer-motion`, `recharts`, `lucide-react`, and 20+ Radix UI primitives. No bundle analyzer is configured.
-- **Lazy Loading:** All pages are bundled into `AppShell` with no `React.lazy()` or `next/dynamic`. The entire app is a single chunk.
-- **Re-renders:** `useAppStore` selectors are used well, but `lib/store.ts` has complex portfolio recalculation running on every price update. With 1000+ concurrent users and WebSocket price ticks, this could cause client-side jank.
-- **Image Optimization:** `images.unoptimized: true` in `next.config.mjs:7` disables Next.js image optimization. Raw `<img>` tags are used for avatars.
-- **API Efficiency:** No request deduplication, caching, or SWR usage. Dashboard and leaderboard fetch fresh data on every mount without stale-while-revalidate.
-- **Telegram Launch Time (Fixed):** Artificial loading screen reduced from 2.5s to 600ms (`app-shell.tsx:37`). Screen still dismisses immediately once auth completes.
+**Weaknesses:**
+- **CRITICAL:** `images.unoptimized: true` means no WebP conversion, no responsive sizing.
+- No lazy loading for tabs — all 5 pages are bundled in the main chunk.
+- `framer-motion` animations run on every price tick (`AssetCard` key={asset.price} re-mounts unnecessarily).
+- `broadcastAllPrices()` every 30 seconds sends to ALL connected sockets, even if prices haven't changed.
+- No CDN for static assets.
+- `next/font` loads Geist from Google on every load (subsetting is good, but self-hosting would be faster).
 
 ### 4. 📱 Telegram Mini App Compliance
 
-**Overall:** Basic SDK integration is present, but the app misses several Telegram-specific UX patterns that users expect.
+**Strengths:**
+- `window.Telegram.WebApp` properly typed and initialized.
+- `tg.expand()` and `tg.ready()` called on mount.
+- `HapticFeedback` used consistently across interactions.
+- `openInvoice` correctly implemented with timeout and promise wrapper.
+- `themeParams` type declaration is present.
+- Viewport locked (`maximumScale: 1, userScalable: false`) to prevent zoom.
 
-- **WebApp SDK:** `useTelegram.ts` correctly calls `expand()` and `ready()`. Haptic feedback is well-implemented across the app.
-- **MainButton / BackButton:** **Not implemented.** The app uses its own bottom nav and buttons instead of native Telegram UI elements. This is a missed opportunity for native feel.
-- **Theme Handling:** The app completely ignores `themeParams` and forces a cyberpunk dark theme. On light-mode Telegram, this feels foreign.
-- **Viewport:** No usage of `viewportStableHeight`. The app uses fixed `pb-24` padding to avoid the bottom nav, which may break on devices with dynamic toolbars.
-- **Safe Area:** CSS classes `safe-area-pt` and `safe-area-pb` exist in `header.tsx` and `bottom-nav.tsx`, but the actual CSS env vars (`env(safe-area-inset-*)`) are not defined in globals.css.
-- **CloudStorage:** Not used. Tour completion and last active tab are stored in `localStorage`, which is less reliable in Mini Apps.
-- **Payments:** `openInvoice` is implemented correctly with proper status handling (`store.tsx:66`). Webhook processing for Stars is solid.
-- **Deep Linking:** Referral via `startapp` is implemented end-to-end (`REFERRAL_SETUP.md` documents this well).
+**Weaknesses:**
+- **No `MainButton` usage** — Telegram recommends using the native MainButton for primary actions (e.g., "Confirm Allocation").
+- **No `BackButton` usage** — Profile modal should use Telegram's BackButton instead of custom X.
+- **No CloudStorage** — `localStorage` is used for tour state; will not persist across WebView sessions.
+- **Theme handling incomplete** — App forces dark theme regardless of Telegram's `themeParams.bg_color`.
+- **No `viewport-stable-height` handling** — Bottom nav may be obscured by Telegram's bottom bar on iOS.
+- **No `isClosingConfirmationEnabled`** — Users can accidentally swipe-close the app during a purchase.
 
 ### 5. 🎨 UI/UX Quality
 
-**Overall:** Visually impressive with neon glassmorphism. Mobile-first layout is good, but some UX patterns need refinement.
+**Strengths:**
+- Mobile-first design with safe-area padding (`safe-area-pt`, `safe-area-pb`).
+- Touch targets are generally > 44px (buttons are 36-48px, but some small icons are 32px).
+- Empty states handled (no history, no rankings).
+- Loading states present for auth and history.
+- Error states for auth and sell errors.
+- Consistent cyberpunk design system with neon colors.
 
-- **Mobile-First:** Yes. Bottom nav, touch-friendly cards, and vertical scrolling are well-suited to mobile.
-- **Touch Targets:** Bottom nav buttons are large enough. Slider thumbs and quick-percent buttons in `allocation-slider.tsx` meet 44px minimum.
-- **Loading States:** `LoadingScreen` is visually rich but artificially delayed. Skeleton screens are absent.
-- **Empty States:** `dashboard.tsx:267-273` shows a decent empty state for position history. However, `leaderboard.tsx:219-224` uses a trophy icon that lacks a call-to-action.
-- **Error States:** `app-shell.tsx:194-207` shows a generic error screen with no retry button. `earn.tsx:107,116` uses `alert()` for errors — poor UX.
-- **Accessibility:** No `aria-label` on icon buttons (`header.tsx:91`, `bottom-nav.tsx`). Color contrast for neon cyan on dark backgrounds may fail WCAG AA.
+**Weaknesses:**
+- **No skeleton screens** — Loading is plain text or spinners.
+- **Accessibility:** No `aria-label` on icon-only buttons (e.g., profile button in header).
+- **Contrast:** `neon-cyan` on dark background may fail WCAG AA for small text.
+- **Scroll behavior:** Profile modal uses `overflow-y-auto` but no scroll-lock on body when open.
+- **Font size:** Some text is `text-[10px]` which is below recommended 12px minimum for mobile.
 
 ### 6. 🧪 Testing & Reliability
 
-**Overall:** No tests exist. This is a major liability for production.
+**Strengths:**
+- Error boundaries present (`error.tsx`, `global-error.tsx`).
+- Basic logging with Winston.
+- Health check endpoint (`/health`).
 
-- **Test Coverage:** 0%. No test framework is installed.
-- **Missing Critical Tests:**
-  - Telegram initData HMAC validation with known good/bad signatures.
-  - Portfolio PnL calculation edge cases (zero balance, negative values).
-  - Allocation validation (sums > 100, negative values).
-  - WebSocket reconnection behavior.
-  - Stars payment webhook flow.
-- **Error Boundaries (Fixed):** Added `app/error.tsx` and `app/global-error.tsx`. Also hardened `header.tsx`, `profile.tsx`, and `leaderboard.tsx` `.charAt(0)` calls with optional chaining.
-- **Offline Handling:** None. The app assumes permanent connectivity.
+**Weaknesses:**
+- **Zero tests.** No unit, integration, or E2E tests.
+- No test scripts in `package.json`.
+- Error boundaries only log to console — no external reporting.
+- No circuit breaker for TwelveData WebSocket or Telegram API calls.
+- No graceful degradation if backend is down (users see generic "Connection to server failed").
 
 ### 7. 🌐 Localization & Internationalization
 
-**Overall:** Completely absent. All strings are hardcoded English.
-
-- **Hardcoded Strings:** Every component (`dashboard.tsx`, `earn.tsx`, `store.tsx`, `profile.tsx`, `leaderboard.tsx`) has hardcoded English UI text.
-- **RTL Readiness:** No CSS logical properties or RTL-specific layout considerations.
-- **Date/Number Formatting:** `toLocaleDateString('en-US')` is hardcoded in `dashboard.tsx:306`. Currency formatting uses `toLocaleString()` without specifying locale.
-- **Telegram Language:** `user.language_code` from Telegram initData is parsed but never used to set app language.
+**Weaknesses:**
+- 100% hardcoded English strings.
+- No i18n library installed.
+- `lang="en"` hardcoded in HTML.
+- Date formatting uses `toLocaleDateString('en-US')` exclusively.
+- Currency formatting uses `$` hardcoded.
+- No RTL support.
+- Telegram's `language_code` from `initData` is parsed but never used.
 
 ### 8. 📊 Analytics & Monitoring
 
-**Overall:** Minimal. Only Vercel Analytics is present.
+**Strengths:**
+- Vercel Analytics installed for frontend.
+- Winston logger for backend with structured JSON in production.
 
-- **User Behavior:** No funnel tracking, no event logging for "First Allocation", "Store Purchase", or "Referral Share".
-- **Error Tracking:** No Sentry, Rollbar, or similar.
-- **Performance Monitoring:** No Web Vitals reporting beyond Vercel's basic metrics.
-- **Business Metrics:** No tracking of DAU, retention cohorts, or purchase conversion rates.
+**Weaknesses:**
+- No custom event tracking (purchases, allocations, task completions).
+- No funnel analysis for onboarding.
+- No error tracking (Sentry).
+- No performance monitoring (Web Vitals).
+- No business metrics dashboard (DAU, retention, ARPU).
 
 ### 9. 🚀 Deployment & DevOps
 
-**Overall:** Deployment docs exist and are good, but CI/CD is absent.
+**Strengths:**
+- `render.yaml` and `vercel.json` present for quick deployment.
+- Environment variable examples provided.
+- Separate production and development env examples.
 
-- **Environment Variables:** `.env.example` and `.env.production.example` exist. Server env vars are validated with Zod (`server/src/config/env.ts`).
-- **Build Config:** `next.config.mjs` disables image optimization and ignores TS errors — both must be fixed.
-- **CI/CD:** No GitHub Actions, no pre-merge checks, no automated tests.
-- **Docker:** No Dockerfile or `docker-compose.yml`.
-- **HTTPS:** Render and Vercel provide HTTPS by default, but the backend code does not enforce it.
+**Weaknesses:**
+- No CI/CD pipeline (GitHub Actions, etc.).
+- No Docker configuration.
+- No staging environment configuration.
+- Render free tier has cold starts (documented in `DEPLOY.md` but not solved).
+- No blue/green deployment strategy.
+- `build` script in server uses `tsc` but `start` uses `dist/index.js` — ensure `dist/` is generated before deploy.
 
 ### 10. 📈 Marketing & Growth Readiness
 
-**Overall:** Good viral mechanics (referrals, tasks, sharing), but onboarding and retention need work.
+**Strengths:**
+- Referral system implemented with deep linking.
+- Onboarding tour is well-designed with 6 steps.
+- Earn tasks for viral growth (follow, share, invite).
+- Telegram Stars payment integration for monetization.
+- Prize pool creates urgency with countdown timer.
 
-- **Onboarding:** The 6-step tour (`onboarding-tour.tsx`) is well-designed but lacks A/B testing or analytics tracking.
-- **Referral System:** Fully implemented with `startapp` deep links. Referrer gets 10 HLX + 2500 HLX for 5 invites.
-- **Sharing:** `earn.tsx:61-68` uses `openTelegramLink` for sharing, which is correct.
-- **Push Notifications:** No strategy for re-engagement via Telegram bot messages (e.g., "Tournament ends in 2 hours!").
-- **Monetization:** Telegram Stars store is well-implemented with 7 SKUs. Pricing seems arbitrary (`lev_5x` costs 1 Star — likely a test price).
-- **Retention:** No daily check-in, streaks, or push re-engagement mechanics beyond the weekly tournament.
+**Weaknesses:**
+- No push notification re-engagement strategy.
+- No "share to story" or Telegram-native share features beyond `openTelegramLink`.
+- No streak/retention mechanics (e.g., "Come back tomorrow for a bonus").
+- No social proof ("1,247 traders competing this week" is mock data).
+- Value proposition is clear but could be stronger on first load.
+- No email/Telegram DM re-engagement for lapsed users.
 
 ### 11. 📋 Documentation
 
-**Overall:** Good deployment docs exist, but developer onboarding is poor.
+**Strengths:**
+- `DEPLOY.md` is comprehensive.
+- `REFERRAL_SETUP.md` and `CHANNEL_VERIFICATION_SETUP.md` are detailed.
+- Inline comments in complex logic (e.g., webhook handling).
 
-- **README:** Missing from root. `DEPLOY.md`, `REFERRAL_SETUP.md`, and `CHANNEL_VERIFICATION_SETUP.md` are good but scattered.
-- **API Docs:** No OpenAPI/Swagger documentation for the Express backend.
-- **Setup Instructions:** `DEPLOY.md` covers deployment but not local development setup for new engineers.
+**Weaknesses:**
+- **No `README.md`** at project root.
+- No API documentation (Swagger/OpenAPI).
+- No developer onboarding guide for local setup.
+- No architecture decision records (ADRs).
 
-### 12. ⚠️ Critical Blockers vs Nice-to-Haves
+### 12. 📦 Scalability & High-Load Readiness
 
-(See consolidated lists at the top of this report.)
+**Database Scalability:**
+- MongoDB indexes present on `telegramId`, `userId+createdAt`, `season+rank`, `weekStart`.
+- **Missing:** Compound index on `allocations.BTC` (used in `twelveData.ts:51` query). The dynamic key query `["allocations.${normalizedSymbol}"]: { $gt: 0 }` cannot use the existing `telegramId` index efficiently. This will cause collection scans as users grow.
+- No connection pooling tuning (default Mongoose settings).
+- No read replicas configured.
+
+**Backend Architecture:**
+- Monolith Express app. Fine for early stage, but Socket.IO and HTTP share the same Node process.
+- **Bottleneck:** `broadcastAllPrices()` emits to ALL sockets every 30s. At 10k concurrent users, this is 10k messages every 30s — manageable, but at 100k+ becomes a bottleneck.
+- **Bottleneck:** `recalcAndBroadcastUser` is called sequentially for every user with an allocation on every price tick. With 1,000 allocated users and 3 ticks/sec, that's 3,000 DB updates/sec.
+
+**Caching Strategy:**
+- **No Redis.** Leaderboard is computed from MongoDB on every request.
+- Prices are only stored in-memory (`latestPrices`). Lost on server restart.
+
+**API Rate Limiting:**
+- General: 100 req/min per IP.
+- Auth: 20 req/15min.
+- Allocation: 10 req/min.
+- **Weakness:** No per-user rate limiting. A botnet can hit 100 req/min from different IPs.
+
+**Concurrency Handling:**
+- **Race condition:** Two simultaneous `allocation` POSTs for the same user can both read the same `balance`, allocate, and save, causing double-spending.
+- **Race condition:** `processReferral` does read-modify-write on referrer balance without locking.
+
+**Real-Time Features:**
+- Socket.IO with in-memory adapter. **Cannot scale horizontally** (multiple server instances won't share socket state).
+- Must migrate to Redis Pub/Sub adapter for horizontal scaling.
+
+**File & Media Storage:**
+- No file uploads in the app. Not applicable.
+
+**Infrastructure Ceiling:**
+- Render free tier: 512MB RAM, sleeps after 15min idle.
+- MongoDB Atlas M0: 512MB RAM, shared cluster.
+- **Estimated capacity:** ~500 concurrent users before latency degradation. ~2,000 before crashes due to memory.
+
+**Load Testing:**
+- No load tests exist (k6, Artillery, Locust).
+
+**Auto-Scaling:**
+- No auto-scaling configuration. Render free tier does not auto-scale.
+
+**SPOF / Bottlenecks:**
+1. **Single Node process** for HTTP + Socket.IO.
+2. **TwelveData WebSocket** — if it disconnects, no price updates, portfolio values freeze.
+3. **MongoDB Atlas M0** — shared tier has noisy neighbor risk.
+
+**Telegram-Specific Scale Risks:**
+- `getChatMember` API called synchronously during task completion. At 30 req/sec bot limit, only 30 task completions/sec possible for channel-verified tasks.
+- `answerPreCheckoutQuery` has a 10-second deadline. Under load, DB lookups may exceed this.
+
+---
+
+## Scalability Assessment Summary
+
+**Estimated Concurrent User Capacity (current):** ~500 users
+**Bottlenecks Before Failure:**
+1. MongoDB M0 shared tier under heavy write load from `recalcAndBroadcastUser`.
+2. Single Node process CPU-bound by Socket.IO broadcasts + Express HTTP.
+3. Telegram Bot API rate limits on channel verification (30 req/sec).
+
+**Scaling Effort to 10x Users:** **Medium**
+- Requires Redis (caching + Socket.IO adapter).
+- Requires MongoDB M10+ dedicated cluster.
+- Requires splitting Socket.IO to separate service or using Redis adapter.
+- Requires per-user rate limiting.
+- Estimated effort: 2-3 weeks of engineering time.
 
 ---
 
@@ -199,91 +319,85 @@ Holdex is a Telegram Mini App investment simulator with a cyberpunk neon UI. The
 
 | Requirement | Status | Notes |
 |-------------|--------|-------|
-| `window.Telegram.WebApp` initialized | ✅ | `useTelegram.ts:26-37` |
-| `ready()` called | ✅ | `useTelegram.ts:31` |
-| `expand()` called | ✅ | `useTelegram.ts:30` |
-| `HapticFeedback` used | ✅ | Used throughout UI interactions |
+| `window.Telegram.WebApp` initialized | ✅ | `useTelegram.ts` handles this |
+| `ready()` called | ✅ | Called on mount |
+| `expand()` called | ✅ | Called on mount |
 | `MainButton` used | ❌ | Not implemented |
 | `BackButton` used | ❌ | Not implemented |
-| `themeParams` respected | ❌ | App forces dark cyberpunk theme |
-| `viewportStableHeight` used | ❌ | Not implemented |
+| `HapticFeedback` used | ✅ | Used extensively |
+| Viewport/theme handling | ⚠️ | Forced dark, ignores `themeParams` |
 | `CloudStorage` used | ❌ | Uses `localStorage` instead |
-| `openInvoice` used | ✅ | `useTelegram.ts:70-101` |
-| `openTelegramLink` used | ✅ | `earn.tsx:64` |
-| Safe area insets handled | ⚠️ | CSS classes exist but env vars not defined |
-| HTTPS required/enforced | ⚠️ | Relies on hosting provider |
-| `initData` validated server-side | ✅ | HMAC validated; **`auth_date` freshness checked (24h)** |
-| Deep linking (`startapp`) | ✅ | Fully implemented |
+| `openInvoice` used | ✅ | Correctly implemented |
+| `openTelegramLink` used | ✅ | Used for sharing |
+| `isClosingConfirmationEnabled` | ❌ | Not set |
+| `viewport-stable-height` | ❌ | Not handled |
+| HTTPS only | ⚠️ | Enforced by Telegram, but no HSTS |
+| `initData` validation | ✅ | HMAC + auth_date verified |
+| Bot deep linking (`startapp`) | ✅ | Referral system uses this |
+| Responsive mobile design | ✅ | Mobile-first CSS |
 
 ---
 
 ## Pre-Release Action Plan
 
-### Week 1: Security & Stability (Priority: P0)
+### Week 1: Critical Security & Stability
+1. **Fix `lev_5x` pricing** — Change 1 Star to 500 Stars. (30 min)
+2. **Add MongoDB transactions** — Wrap sell, allocation, and referral in sessions. (4 hours)
+3. **Fix optimistic update rollback** — `setAssetLeverage` should revert on failure. (1 hour)
+4. **Fix position history PnL** — Search backward for original allocation. (1 hour)
+5. **Add per-user rate limiting** — Redis or in-memory by `telegramId`. (2 hours)
+6. **Remove `images.unoptimized`** — Use `next/image`. (1 hour)
+7. **Add CSRF protection** — SameSite strict + origin validation. (2 hours)
 
-| Day | Task | Effort |
-|-----|------|--------|
-| 1 | ~~Rotate TwelveData API key; remove `test-websocket.js` from repo~~ | **DONE** (file removed; still rotate key) |
-| 1 | ~~Fix CORS in `server/src/index.ts` to reject unknown origins~~ | **DONE** |
-| 1 | ~~Add `auth_date` expiration check to `validateTelegramInitData`~~ | **DONE** |
-| 2 | ~~Remove `ignoreBuildErrors` from `next.config.mjs`; fix TypeScript errors~~ | **DONE** |
-| 2 | ~~Add `ErrorBoundary` to `app/page.tsx` wrapping `AppShell`~~ | **DONE** (`app/error.tsx` + `app/global-error.tsx`) |
-| 3 | ~~Remove mock data fallback from `server/src/routes/allocation.ts`~~ | **DONE** |
-| 3 | Replace raw `<img>` tags with `next/image` or add `onError` fallbacks | 2h |
-| 4 | Add CSP meta tag in `app/layout.tsx` | 2h |
-| 4 | Write root `README.md` | 3h |
+### Week 2: Production Hardening
+8. **Add Sentry** — Frontend + backend error tracking. (2 hours)
+9. **Implement JWT refresh tokens** — 24h access + 7d refresh. (4 hours)
+10. **Add Redis caching** — Leaderboard + price snapshots. (4 hours)
+11. **Add HTTPS enforcement** — HSTS + redirect. (30 min)
+12. **Add admin dashboard** — Protected route with key metrics. (8 hours)
+13. **Write tests** — At minimum, auth flow + allocation flow. (8 hours)
 
-### Week 2: Reliability & UX (Priority: P1)
+### Week 3: Telegram Compliance & UX
+14. **Implement `MainButton`** — For "Confirm Allocation" and "Sell All". (3 hours)
+15. **Implement `BackButton`** — For profile modal navigation. (2 hours)
+16. **Migrate to `CloudStorage`** — Replace `localStorage`. (3 hours)
+17. **Add skeleton screens** — For dashboard and leaderboard. (4 hours)
+18. **Add i18n** — Extract strings, add Russian + Spanish. (8 hours)
+19. **Add offline detection** — Banner when connection lost. (2 hours)
 
-| Day | Task | Effort |
-|-----|------|--------|
-| 5 | ~~Remove artificial 2.5s loading delay in `app-shell.tsx`~~ | **DONE** (reduced to 600ms) |
-| 5 | Create shared API client with retry logic; remove duplicated `BACKEND_URL` | 4h |
-| 6 | Add rate limiter to `/api/leaderboard` | 1h |
-| 6 | ~~Add Zod validation to Telegram webhook handler~~ | **DONE** |
-| 7 | Replace `alert()` calls in `earn.tsx` with in-app toast/snackbar | 2h |
-| 7 | Add `aria-label` attributes to all icon-only buttons | 2h |
-| 8 | ~~Add `not-found.tsx` and `error.tsx` to `app/`~~ | **DONE** (`app/error.tsx` + `app/global-error.tsx` added) |
+### Week 4: Growth & Analytics
+20. **Add custom analytics** — Mixpanel/Amplitude for key events. (4 hours)
+21. **Add bot commands** — `/start`, `/help`, `/leaderboard`. (2 hours)
+22. **Add push re-engagement** — Bot DMs for tournament end, task reminders. (4 hours)
+23. **Fix weekly reset fairness** — Reset balance to 100 or implement tournament wallet. (2 hours)
+24. **Add PWA manifest** — For installability. (1 hour)
 
-### Week 3: Testing & Monitoring (Priority: P1)
-
-| Day | Task | Effort |
-|-----|------|--------|
-| 9-10 | Add Vitest + React Testing Library; write tests for `store.ts`, `auth.ts`, portfolio calc | 8h |
-| 11 | Add Supertest for Express API routes | 4h |
-| 12 | Integrate Sentry frontend and backend SDKs | 3h |
-| 12 | Add `@next/bundle-analyzer` and audit bundle | 2h |
-
-### Week 4: Telegram Compliance & Polish (Priority: P2)
-
-| Day | Task | Effort |
-|-----|------|--------|
-| 13 | Implement `viewportStableHeight` and safe area env vars | 3h |
-| 14 | Add `MainButton` support for primary actions (Allocate, Sell) | 4h |
-| 14 | Respect `themeParams` for background/text colors | 4h |
-| 15 | Migrate tour completion from `localStorage` to `CloudStorage` | 2h |
+**Total Estimated Effort:** 4 weeks, 1 engineer.
 
 ---
 
 ## Post-Release Roadmap
 
-### v1.1 (Immediate follow-up)
-- **i18n:** Full English, Russian, Spanish, and Chinese localization.
-- **PWA:** Service worker for offline caching and add-to-home-screen.
-- **Analytics:** Amplitude/Mixpanel integration with funnel tracking.
-- **A/B Testing:** Test different onboarding tour lengths and store pricing.
+### v1.1 (Month 2)
+- **Multiple tournaments** — Daily + weekly leaderboards.
+- **More assets** — Add ETH, SOL, indices.
+- **Real TON prizes** — Integration with TON Connect for withdrawals.
+- **Push notifications** — Tournament reminders via bot.
+- **Improved caching** — Full Redis integration with cache invalidation.
 
-### v1.2 (Growth)
-- **Push Notifications:** Bot-based re-engagement (daily price alerts, tournament reminders).
-- **Social Proof:** Show "X users joined today" ticker in dashboard.
-- **Streaks:** Daily login bonus mechanic to improve DAU.
+### v1.2 (Month 3)
+- **Social features** — Friend leaderboards, copy-trading.
+- **Advanced orders** — Stop-loss, take-profit simulations.
+- **Localization** — Full i18n with 10+ languages.
+- **A/B testing** — Onboarding variants, pricing tests.
+- **Performance** — Code splitting, image optimization, reduced motion.
 
-### v1.3 (Monetization)
-- **Subscription Tiers:** Premium monthly subscription via Telegram Stars for advanced analytics.
-- **Ad Integration:** Optional rewarded video tasks (if Telegram allows).
-- **TON Payout Automation:** Smart contract integration for automatic weekly prize distribution.
+### v2.0 (Month 4-5)
+- **Horizontal scaling** — Microservices architecture, Kubernetes.
+- **Real money mode** — Compliance, KYC integration.
+- **NFT badges** — Achievement system on TON blockchain.
+- **API platform** — Public API for third-party integrations.
 
-### v2.0 (Platform)
-- **Real Trading:** Transition from simulation to micro-trading with real TON deposits.
-- **Guilds/Teams:** Squad-based tournaments for viral group mechanics.
-- **NFT Avatars:** Customizable profile NFTs purchasable with Stars.
+---
+
+*End of Report*
