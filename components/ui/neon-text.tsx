@@ -5,7 +5,7 @@ import { motion, type HTMLMotionProps } from 'framer-motion'
 import { forwardRef, type Ref } from 'react'
 
 interface NeonTextProps extends Omit<HTMLMotionProps<'span'>, 'ref'> {
-  glow?: 'cyan' | 'pink' | 'green' | 'gold'
+  glow?: 'cyan' | 'pink' | 'green' | 'gold' | 'none'
   as?: 'span' | 'h1' | 'h2' | 'h3' | 'p'
   animate?: boolean
 }
@@ -15,6 +15,7 @@ const glowClasses = {
   pink: 'text-neon-pink text-glow-pink',
   green: 'text-neon-green text-glow-green',
   gold: 'text-neon-gold text-glow-gold',
+  none: '',
 }
 
 export const NeonText = forwardRef(function NeonText(

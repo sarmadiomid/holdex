@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ExternalLink, CheckCircle, Loader2, Coins, Gift, Copy, Share2 } from 'lucide-react'
+import { ExternalLink, CheckCircle, Loader2, Coins, Gift, Copy, Share2, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/ui/glass-card'
 import { NeonText } from '@/components/ui/neon-text'

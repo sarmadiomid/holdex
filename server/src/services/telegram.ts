@@ -97,7 +97,7 @@ export async function checkChannelMembership(
 
     // User is considered a member if they have any of these statuses
     const memberStatuses = ['creator', 'administrator', 'member']
-    const isMember = data.result && memberStatuses.includes(data.result.status)
+    const isMember = !!(data.result && memberStatuses.includes(data.result.status))
 
     logger.info(
       `Channel membership check: userId=${userId}, chatId=${chatId}, status=${data.result?.status}, isMember=${isMember}`,

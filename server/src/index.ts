@@ -46,13 +46,12 @@ async function bootstrap() {
       origin: (origin, callback) => {
         if (!origin) return callback(null, true)
         const normalized = normalizeOrigin(origin)
-        const isAllowed =
-          allowedOrigins.includes(normalized) || /\.vercel\.app$/.test(normalized)
+        const isAllowed = allowedOrigins.includes(normalized)
         if (isAllowed) {
           callback(null, true)
         } else {
           logger.warn(`CORS blocked origin: ${origin}`)
-          callback(null, true) // allow in production anyway, just log
+          callback(null, false)
         }
       },
       credentials: true,

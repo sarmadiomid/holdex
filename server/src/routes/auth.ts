@@ -78,7 +78,10 @@ router.post(
       if (isNewUser && referrerId) {
         const { inviteTaskCompleted, newBalance } = await processReferral(user, referrerId)
         // Reload user to get updated balance if they were referred
-        user = await User.findById(user._id)
+        const reloadedUser = await User.findById(user._id)
+        if (reloadedUser) {
+          user = reloadedUser
+        }
       }
 
       const token = jwt.sign(

@@ -53,6 +53,7 @@ interface AppState {
   activeTab: 'dashboard' | 'allocate' | 'store' | 'leaderboard' | 'earn'
 
   setActiveTab: (tab: 'dashboard' | 'allocate' | 'store' | 'leaderboard' | 'earn') => void
+  setTourCompleted: () => void
   completeTask: (taskId: string) => void
   setToken: (token: string | null) => void
   setAuthenticatedUser: (userData: User, token: string) => void
