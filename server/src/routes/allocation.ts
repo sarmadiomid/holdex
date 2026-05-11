@@ -187,7 +187,8 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
         const sellPositions = soldPositions.map(({ asset, allocation, pnl: assetPnl }) => {
           const allocatedAmount = user.balance * (allocation / 100)
           const twelveSymbol = asset === 'BTC' ? 'BTC/USD' : asset === 'GOLD' ? 'XAU/USD' : 'EUR/USD'
-          const currentPrice = prices[twelveSymbol]?.price ?? user.initialPrices[asset] ?? 0
+          const initialPrice = user.initialPrices[asset as 'BTC' | 'GOLD' | 'EUR']
+          const currentPrice = prices[twelveSymbol]?.price ?? initialPrice ?? 0
           
           return {
             userId: user._id,

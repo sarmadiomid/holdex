@@ -76,73 +76,9 @@ router.post(
   },
 )
 
-const webhookSchema = z.object({
-  telegramId: z.number(),
-  packageId: z.string(),
-  status: z.enum(['paid', 'cancelled', 'failed', 'pending']),
-})
-
-router.post(
-  '/webhook',
-  validate(webhookSchema),
-  async (req, res) => {
-    try {
-      const { telegramId, packageId, status } = req.body as {
-        telegramId: number
-        packageId: string
-        status: string
-      }
-
-      if (status !== 'paid') {
-        return res.json({ received: true })
-      }
-
-      const pkg = STARS_PACKAGES[packageId]
-      if (!pkg) {
-        return res.status(400).json({ error: 'Invalid package' })
-      }
-
-      const user = await User.findOne({ telegramId })
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' })
-      }
-
-      if (pkg.hlx) {
-        user.balance += pkg.hlx
-        user.portfolioValue += pkg.hlx
-
-        await Position.create({
-          userId: user._id,
-          type: 'store_purchase',
-          amount: pkg.hlx,
-          hlxValue: pkg.hlx,
-        })
-
-        logger.info(`User ${telegramId} purchased ${pkg.hlx} HLX for ${pkg.starsPrice} stars`)
-      }
-
-      if (pkg.leverage) {
-        user.leverage = pkg.leverage
-
-        await Position.create({
-          userId: user._id,
-          type: 'store_purchase',
-          asset: 'BTC',
-          amount: 0,
-          hlxValue: 0,
-        })
-
-        logger.info(`User ${telegramId} purchased ${pkg.leverage}x leverage for ${pkg.starsPrice} stars`)
-      }
-
-      await user.save()
-
-      res.json({ success: true })
-    } catch (error) {
-      logger.error('Stars webhook error', { error })
-      res.status(500).json({ error: 'Webhook processing failed' })
-    }
-  },
-)
+// Note: This webhook endpoint is deprecated and unused.
+// Telegram Stars payments are handled via /telegram-webhook in server/src/index.ts
+// which receives webhooks directly from Telegram's servers.
+// This endpoint is kept for backwards compatibility but should not be used.
 
 export default router

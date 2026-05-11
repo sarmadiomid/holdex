@@ -20,20 +20,28 @@ interface SetWebhookResponse {
   description?: string
 }
 
-export async function setupTelegramWebhook(webhookUrl: string): Promise<boolean> {
+export async function setupTelegramWebhook(webhookUrl: string, secretToken?: string): Promise<boolean> {
   try {
     const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/setWebhook`
+
+    const body: any = {
+      url: webhookUrl,
+      drop_pending_updates: true,
+    }
+
+    // Add secret token for webhook validation if provided
+    if (secretToken) {
+      body.secret_token = secretToken
+      logger.info('Setting webhook with secret token for enhanced security')
+    }
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url: webhookUrl,
-        drop_pending_updates: true,
-      }),
+      body: JSON.stringify(body),
     })
 
-    const data: SetWebhookResponse = await response.json()
+    const data = await response.json() as SetWebhookResponse
 
     if (!data.ok) {
       logger.error('Failed to set Telegram webhook', { error: data.description, webhookUrl })
@@ -52,7 +60,7 @@ export async function getWebhookInfo(): Promise<{ webhook_url: string; has_custo
   try {
     const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getWebhookInfo`
     const response = await fetch(url)
-    const data = await response.json()
+    const data = await response.json() as any
 
     if (data.ok) {
       return data.result
@@ -88,7 +96,7 @@ export async function checkChannelMembership(
       }),
     })
 
-    const data: ChatMemberResponse = await response.json()
+    const data = await response.json() as ChatMemberResponse
 
     if (!data.ok) {
       logger.warn(`Failed to check channel membership: ${data.description}`)
@@ -132,7 +140,7 @@ export async function getChatInfo(chatId: string): Promise<{
       }),
     })
 
-    const data = await response.json()
+    const data = await response.json() as any
 
     if (!data.ok) {
       logger.warn(`Failed to get chat info: ${data.description}`)
@@ -175,7 +183,7 @@ export async function createStarsInvoiceLink(params: {
       }),
     })
 
-    const data = await response.json()
+    const data = await response.json() as any
 
     if (!data.ok) {
       logger.error('Failed to create Stars invoice link', { 

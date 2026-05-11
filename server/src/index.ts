@@ -85,14 +85,51 @@ async function bootstrap() {
     telegramId: z.number().int(),
   })
 
+  // Track processed update IDs to prevent replay attacks
+  const processedUpdateIds = new Set<number>()
+  const MAX_PROCESSED_IDS = 10000 // Limit memory usage
+
   app.post('/telegram-webhook', express.json(), async (req, res) => {
     try {
+      // Validate webhook secret token if configured
+      if (env.TELEGRAM_WEBHOOK_SECRET) {
+        const secretToken = req.headers['x-telegram-bot-api-secret-token']
+        if (secretToken !== env.TELEGRAM_WEBHOOK_SECRET) {
+          logger.warn('Invalid webhook secret token', { 
+            receivedToken: secretToken ? '[REDACTED]' : 'none' 
+          })
+          return res.status(401).json({ error: 'Unauthorized' })
+        }
+      }
+
       const parseResult = WebhookBodySchema.safeParse(req.body)
       if (!parseResult.success) {
         logger.warn('Invalid webhook body', { errors: parseResult.error.flatten() })
         return res.json({ ok: true })
       }
       const update = parseResult.data
+
+      // Prevent replay attacks by checking if update_id was already processed
+      if (processedUpdateIds.has(update.update_id)) {
+        logger.warn('Duplicate update_id detected - possible replay attack', { 
+          updateId: update.update_id 
+        })
+        return res.json({ ok: true })
+      }
+
+      // Add to processed set and clean up if too large
+      processedUpdateIds.add(update.update_id)
+      if (processedUpdateIds.size > MAX_PROCESSED_IDS) {
+        // Remove oldest entries (Set maintains insertion order)
+        const iterator = processedUpdateIds.values()
+        for (let i = 0; i < 1000; i++) {
+          const value = iterator.next().value
+          if (value !== undefined) {
+            processedUpdateIds.delete(value)
+          }
+        }
+      }
+
       logger.info('Received Telegram webhook', { updateId: update.update_id })
 
       // Handle pre-checkout query (must answer within 10 seconds)
@@ -243,10 +280,13 @@ async function bootstrap() {
 
   if (env.TELEGRAM_WEBHOOK_URL) {
     const webhookUrl = `${env.TELEGRAM_WEBHOOK_URL}/telegram-webhook`
-    const success = await setupTelegramWebhook(webhookUrl)
+    const success = await setupTelegramWebhook(webhookUrl, env.TELEGRAM_WEBHOOK_SECRET)
     if (success) {
       const info = await getWebhookInfo()
       logger.info('Telegram webhook info', { info })
+      if (env.TELEGRAM_WEBHOOK_SECRET) {
+        logger.info('Webhook secret token configured for enhanced security')
+      }
     } else {
       logger.warn('Failed to set Telegram webhook - payments may not work', { webhookUrl })
     }

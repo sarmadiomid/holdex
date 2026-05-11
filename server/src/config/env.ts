@@ -12,6 +12,7 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
   ALLOWED_ORIGINS: z.string().optional(),
   TELEGRAM_WEBHOOK_URL: z.string().url().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>
