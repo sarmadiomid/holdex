@@ -52,7 +52,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable} bg-background`}>
       <head>
-        <script src="https://telegram.org/js/telegram-web-app.js" defer />
+        <script src="/telegram-web-app.js" defer />
       </head>
       <body className="font-sans antialiased min-h-screen overflow-x-hidden">
         {children}
