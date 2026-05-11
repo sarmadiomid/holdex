@@ -3,6 +3,7 @@ import express from 'express'
 import http from 'http'
 import cors from 'cors'
 import helmet from 'helmet'
+import { z } from 'zod'
 import { env } from './config/env'
 import { logger } from './utils/logger'
 import { connectDB } from './db/connect'
@@ -65,18 +66,53 @@ async function bootstrap() {
   })
 
   // Telegram webhook endpoint for Stars payment verification
+  const WebhookBodySchema = z.object({
+    update_id: z.number().int(),
+    pre_checkout_query: z.object({
+      id: z.string().min(1),
+      invoice_payload: z.string().min(1),
+    }).optional(),
+    message: z.object({
+      successful_payment: z.object({
+        invoice_payload: z.string().min(1),
+        telegram_payment_charge_id: z.string().min(1),
+      }).optional(),
+    }).optional(),
+  })
+
+  const PayloadSchema = z.object({
+    packageId: z.string().min(1),
+    telegramId: z.number().int(),
+  })
+
   app.post('/telegram-webhook', express.json(), async (req, res) => {
     try {
-      const update = req.body
+      const parseResult = WebhookBodySchema.safeParse(req.body)
+      if (!parseResult.success) {
+        logger.warn('Invalid webhook body', { errors: parseResult.error.flatten() })
+        return res.json({ ok: true })
+      }
+      const update = parseResult.data
       logger.info('Received Telegram webhook', { updateId: update.update_id })
 
       // Handle pre-checkout query (must answer within 10 seconds)
       if (update.pre_checkout_query) {
-        const { id: queryId, payload } = update.pre_checkout_query
+        const { id: queryId, invoice_payload: payload } = update.pre_checkout_query
         
         try {
-          const parsedPayload = JSON.parse(payload)
-          const { packageId } = parsedPayload
+          const rawPayload = JSON.parse(payload)
+          const payloadResult = PayloadSchema.safeParse(rawPayload)
+          if (!payloadResult.success) {
+            logger.warn('Invalid pre-checkout payload', { errors: payloadResult.error.flatten() })
+            const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
+            await fetch(answerUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pre_checkout_query_id: queryId, ok: false, error_message: 'Invalid payload' }),
+            })
+            return res.json({ ok: true })
+          }
+          const { packageId } = payloadResult.data
           
           if (STARS_PACKAGES[packageId]) {
             // Approve the checkout
@@ -118,12 +154,17 @@ async function bootstrap() {
 
       // Handle successful payment
       if (update.message?.successful_payment) {
-        const { successful_payment, from } = update.message
+        const { successful_payment } = update.message
         const { invoice_payload, telegram_payment_charge_id } = successful_payment
         
         try {
-          const parsedPayload = JSON.parse(invoice_payload)
-          const { packageId, telegramId } = parsedPayload
+          const rawPayload = JSON.parse(invoice_payload)
+          const payloadResult = PayloadSchema.safeParse(rawPayload)
+          if (!payloadResult.success) {
+            logger.warn('Invalid payment payload', { errors: payloadResult.error.flatten() })
+            return res.json({ ok: true })
+          }
+          const { packageId, telegramId } = payloadResult.data
           
           const pkg = STARS_PACKAGES[packageId]
           if (!pkg) {
