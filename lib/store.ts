@@ -196,41 +196,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         change24h: Math.round(change24h * 100) / 100,
       }
 
-       // Recalculate portfolio client-side with per-asset multipliers
-       const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
-       const assetLeverages = state.user.assetLeverages || { BTC: state.user.leverage, GOLD: state.user.leverage, EUR: state.user.leverage }
-       let totalValue = 0
-       let totalAllocated = 0
-
-       for (const asset of updatedAssets) {
-         const allocation = state.allocations[asset.id] || 0
-         const allocatedAmount = (state.user.balance * allocation) / 100
-         totalAllocated += allocation
-
-         if (allocatedAmount > 0 && state.initialPrices[asset.id]) {
-           const priceChange = (asset.price - state.initialPrices[asset.id]!) / state.initialPrices[asset.id]!
-           const mult = multipliers[asset.id] || 1
-           const amplifiedChange = priceChange * mult
-           const assetLeverage = assetLeverages[asset.id] || state.user.leverage
-           const leveragedChange = amplifiedChange * assetLeverage
-           totalValue += allocatedAmount * (1 + leveragedChange)
-         }
-       }
-
-      const unallocatedPercent = 100 - totalAllocated
-      totalValue += (state.user.balance * unallocatedPercent) / 100
-
-      const pnl = totalValue - state.user.balance
-      const pnlPercent = state.user.balance > 0 ? (pnl / state.user.balance) * 100 : 0
-
+      // Don't recalculate portfolio here - let backend handle it via user_update socket event
+      // This prevents conflict between frontend and backend calculations
       return {
         assets: updatedAssets,
-        user: {
-          ...state.user,
-          portfolioValue: Math.round(totalValue * 100) / 100,
-          totalPnl: Math.round(pnl * 100) / 100,
-          totalPnlPercent: Math.round(pnlPercent * 100) / 100,
-        },
       }
     })
   },
@@ -259,6 +228,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         return asset
       })
 
+      // Don't recalculate portfolio here - backend will send user_update with correct values
       return { assets: updatedAssets, initialPrices }
     })
   },
