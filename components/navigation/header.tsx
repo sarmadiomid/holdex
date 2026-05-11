@@ -55,7 +55,7 @@ export function Header({ onProfileClick }: HeaderProps) {
               <img src={user.photoUrl} alt={user.firstName} className="size-full rounded-full object-cover" />
             ) : (
               <span className="text-sm font-bold text-background">
-                {user.firstName.charAt(0).toUpperCase()}
+                {user.firstName?.charAt(0)?.toUpperCase() ?? '?'}
               </span>
             )}
           </motion.button>

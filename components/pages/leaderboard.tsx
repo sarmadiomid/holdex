@@ -190,7 +190,7 @@ export function Leaderboard() {
           <div className="flex items-center justify-between pl-2">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-background">{user.firstName.charAt(0)}</span>
+                <span className="text-sm font-bold text-background">{user.firstName?.charAt(0) ?? '?'}</span>
               </div>
               <div>
                 <p className="font-semibold text-foreground">You</p>
@@ -305,7 +305,7 @@ export function Leaderboard() {
                       
                       <div className="flex items-center gap-2.5">
                         <div className="size-10 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center shrink-0 shadow-md">
-                          <span className="text-sm font-bold text-background">{userEntry.user.firstName.charAt(0)}</span>
+                          <span className="text-sm font-bold text-background">{userEntry.user.firstName?.charAt(0) ?? '?'}</span>
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
