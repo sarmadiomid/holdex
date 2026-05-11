@@ -34,7 +34,7 @@ function LoadingScreen() {
 
   useEffect(() => {
     const startTime = Date.now()
-    const duration = 2500
+    const duration = 600
     const animate = () => {
       const elapsed = Date.now() - startTime
       const t = Math.min(elapsed / duration, 1)
