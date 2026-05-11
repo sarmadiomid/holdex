@@ -281,31 +281,8 @@ router.get(
 
       logger.info('Found positions', { count: positions.length })
 
-      // If no positions found, return mock data for testing
       if (positions.length === 0) {
-        const mockHistory = [
-          {
-            id: 'mock-1',
-            type: 'sell',
-            asset: 'BTC',
-            amount: 30,
-            hlxValue: 45,
-            pnl: 15,
-            priceAtTime: 50000,
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 'mock-2',
-            type: 'sell',
-            asset: 'GOLD',
-            amount: 20,
-            hlxValue: 15,
-            pnl: -5,
-            priceAtTime: 2000,
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-          },
-        ]
-        return res.json({ history: mockHistory })
+        return res.json({ history: [] })
       }
 
       // Calculate PnL for each entry - show actual HLX profit/loss

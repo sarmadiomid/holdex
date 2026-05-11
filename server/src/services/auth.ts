@@ -32,6 +32,12 @@ export function validateTelegramInitData(initData: string, botToken: string): {
     return { valid: false, data: null }
   }
 
+  const authDate = Number(params.get('auth_date'))
+  const now = Math.floor(Date.now() / 1000)
+  if (!authDate || now - authDate > 86400) {
+    return { valid: false, data: null }
+  }
+
   const data: Record<string, string> = {}
   params.forEach((value, key) => {
     data[key] = value
