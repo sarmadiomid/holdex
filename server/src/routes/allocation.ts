@@ -55,29 +55,37 @@ router.post(
       if (prices['XAU/USD']) initialPrices.GOLD = prices['XAU/USD'].price
       if (prices['EUR/USD']) initialPrices.EUR = prices['EUR/USD'].price
 
-      user.allocations = allocations
-      user.initialPrices = {
-        BTC: initialPrices.BTC,
-        GOLD: initialPrices.GOLD,
-        EUR: initialPrices.EUR,
-      }
+      // Use transaction to ensure atomicity of user update + position creation
+      const session = await user.db.startSession()
+      try {
+        await session.withTransaction(async () => {
+          user.allocations = allocations
+          user.initialPrices = {
+            BTC: initialPrices.BTC,
+            GOLD: initialPrices.GOLD,
+            EUR: initialPrices.EUR,
+          }
 
-      await user.save()
+          await user.save({ session })
 
-      const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
-      for (const asset of ['BTC', 'GOLD', 'EUR'] as const) {
-        const alloc = allocations[asset]
-        if (alloc > 0) {
-          const allocatedAmount = (user.balance * alloc) / 100
-          await Position.create({
-            userId: user._id,
-            type: 'allocate',
-            asset,
-            amount: alloc,
-            hlxValue: allocatedAmount,
-            priceAtTime: initialPrices[asset] ?? undefined,
-          })
-        }
+          const multipliers: Record<string, number> = { BTC: 100, GOLD: 50, EUR: 1000 }
+          for (const asset of ['BTC', 'GOLD', 'EUR'] as const) {
+            const alloc = allocations[asset]
+            if (alloc > 0) {
+              const allocatedAmount = (user.balance * alloc) / 100
+              await Position.create([{
+                userId: user._id,
+                type: 'allocate',
+                asset,
+                amount: alloc,
+                hlxValue: allocatedAmount,
+                priceAtTime: initialPrices[asset] ?? undefined,
+              }], { session })
+            }
+          }
+        })
+      } finally {
+        await session.endSession()
       }
 
       const updated = await recalcAndBroadcastUser(user)
@@ -162,16 +170,6 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
         }
 
         soldPositions.push({ asset, allocation: alloc, pnl: assetPnl })
-
-        await Position.create({
-          userId: user._id,
-          type: 'sell',
-          asset,
-          amount: alloc,
-          hlxValue: allocatedAmount + assetPnl,
-          pnl: assetPnl,
-          priceAtTime: currentPrice,
-        })
       }
     }
 
@@ -181,24 +179,53 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
     let newBalance = Math.max(0, Math.round(totalValue * 100) / 100)
     const pnl = Math.round((totalValue - user.balance) * 100) / 100
 
-    // Reset all positions when balance hits 0
-    if (newBalance <= 0) {
-      user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
-      user.initialPrices = { BTC: null, GOLD: null, EUR: null }
-      user.balance = 0
-      user.portfolioValue = 0
-      user.totalPnl = 0
-      user.totalPnlPercent = 0
-    } else {
-      user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
-      user.initialPrices = { BTC: null, GOLD: null, EUR: null }
-      user.balance = newBalance
-      user.portfolioValue = newBalance
-      user.totalPnl = 0
-      user.totalPnlPercent = 0
-    }
+    // Use transaction to ensure atomicity of user update + position creation
+    const session = await user.db.startSession()
+    try {
+      await session.withTransaction(async () => {
+        // Create all sell positions
+        const sellPositions = soldPositions.map(({ asset, allocation, pnl: assetPnl }) => {
+          const allocatedAmount = user.balance * (allocation / 100)
+          const twelveSymbol = asset === 'BTC' ? 'BTC/USD' : asset === 'GOLD' ? 'XAU/USD' : 'EUR/USD'
+          const currentPrice = prices[twelveSymbol]?.price ?? user.initialPrices[asset] ?? 0
+          
+          return {
+            userId: user._id,
+            type: 'sell',
+            asset,
+            amount: allocation,
+            hlxValue: allocatedAmount + assetPnl,
+            pnl: assetPnl,
+            priceAtTime: currentPrice,
+          }
+        })
 
-    await user.save()
+        if (sellPositions.length > 0) {
+          await Position.create(sellPositions, { session })
+        }
+
+        // Reset all positions when balance hits 0
+        if (newBalance <= 0) {
+          user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
+          user.initialPrices = { BTC: null, GOLD: null, EUR: null }
+          user.balance = 0
+          user.portfolioValue = 0
+          user.totalPnl = 0
+          user.totalPnlPercent = 0
+        } else {
+          user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
+          user.initialPrices = { BTC: null, GOLD: null, EUR: null }
+          user.balance = newBalance
+          user.portfolioValue = newBalance
+          user.totalPnl = 0
+          user.totalPnlPercent = 0
+        }
+
+        await user.save({ session })
+      })
+    } finally {
+      await session.endSession()
+    }
 
     broadcastAllocationUpdate(user.telegramId, { BTC: 0, GOLD: 0, EUR: 0 })
     broadcastUserUpdate(user.telegramId, {
