@@ -23,6 +23,7 @@ export function AssetCard({ asset, index }: AssetCardProps) {
   const { haptic } = useTelegram()
   const setActiveTab = useAppStore((state) => state.setActiveTab)
   const allocations = useAppStore((state) => state.allocations)
+  const pricesLoaded = useAppStore((state) => state.pricesLoaded)
   
   const isPositive = asset.change24h >= 0
   const allocation = allocations[asset.id] || 0
@@ -97,30 +98,39 @@ export function AssetCard({ asset, index }: AssetCardProps) {
 
           {/* Price Info */}
           <div className="text-right">
-            <motion.p 
-              className="font-mono font-semibold text-foreground"
-              key={asset.price}
-              initial={{ scale: 1.05 }}
-              animate={{ scale: 1 }}
-            >
-              ${asset.price.toLocaleString(undefined, {
-                minimumFractionDigits: asset.id === 'EUR' ? 4 : 2,
-                maximumFractionDigits: asset.id === 'EUR' ? 4 : 2
-              })}
-            </motion.p>
-            <div className={cn(
-              'flex items-center justify-end gap-1 text-sm',
-              isPositive ? 'text-neon-green' : 'text-neon-pink'
-            )}>
-              {isPositive ? (
-                <TrendingUp className="size-3" />
-              ) : (
-                <TrendingDown className="size-3" />
-              )}
-              <span className="font-mono">
-                {isPositive ? '+' : ''}{asset.change24h.toFixed(2)}%
-              </span>
-            </div>
+            {!pricesLoaded ? (
+              <>
+                <div className="h-6 w-24 bg-muted/30 rounded animate-pulse mb-1" />
+                <div className="h-4 w-16 bg-muted/20 rounded animate-pulse ml-auto" />
+              </>
+            ) : (
+              <>
+                <motion.p 
+                  className="font-mono font-semibold text-foreground"
+                  key={asset.price}
+                  initial={{ scale: 1.05 }}
+                  animate={{ scale: 1 }}
+                >
+                  ${asset.price.toLocaleString(undefined, {
+                    minimumFractionDigits: asset.id === 'EUR' ? 4 : 2,
+                    maximumFractionDigits: asset.id === 'EUR' ? 4 : 2
+                  })}
+                </motion.p>
+                <div className={cn(
+                  'flex items-center justify-end gap-1 text-sm',
+                  isPositive ? 'text-neon-green' : 'text-neon-pink'
+                )}>
+                  {isPositive ? (
+                    <TrendingUp className="size-3" />
+                  ) : (
+                    <TrendingDown className="size-3" />
+                  )}
+                  <span className="font-mono">
+                    {isPositive ? '+' : ''}{asset.change24h.toFixed(2)}%
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </GlassCard>

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 
 export function PortfolioCard() {
   const user = useAppStore((state) => state.user)
+  const pricesLoaded = useAppStore((state) => state.pricesLoaded)
   const isPositive = user.totalPnl >= 0
 
   return (
@@ -33,56 +34,65 @@ export function PortfolioCard() {
         </div>
 
         {/* Value */}
-        <motion.div 
-          className="mb-4"
-          key={user.portfolioValue}
-          initial={{ scale: 1.02 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 500 }}
-        >
-          <NeonText glow="cyan" className="text-4xl font-bold font-mono tracking-tight">
-            {user.portfolioValue.toLocaleString(undefined, { 
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2 
-            })}
-          </NeonText>
-          <span className="text-lg text-muted-foreground ml-2">HLX</span>
-        </motion.div>
+        {!pricesLoaded ? (
+          <div className="mb-4">
+            <div className="h-10 w-48 bg-muted/30 rounded animate-pulse mb-2" />
+            <div className="h-6 w-32 bg-muted/20 rounded animate-pulse" />
+          </div>
+        ) : (
+          <>
+            <motion.div 
+              className="mb-4"
+              key={user.portfolioValue}
+              initial={{ scale: 1.02 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 500 }}
+            >
+              <NeonText glow="cyan" className="text-4xl font-bold font-mono tracking-tight">
+                {user.portfolioValue.toLocaleString(undefined, { 
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2 
+                })}
+              </NeonText>
+              <span className="text-lg text-muted-foreground ml-2">HLX</span>
+            </motion.div>
 
-        {/* PNL */}
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg',
-            isPositive ? 'bg-neon-green/20' : 'bg-neon-pink/20'
-          )}>
-            {isPositive ? (
-              <TrendingUp className="size-4 text-neon-green" />
-            ) : (
-              <TrendingDown className="size-4 text-neon-pink" />
-            )}
-            <span className={cn(
-              'font-mono font-medium',
-              isPositive ? 'text-neon-green' : 'text-neon-pink'
-            )}>
-              {isPositive ? '+' : ''}{user.totalPnl.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}
-            </span>
-          </div>
-          
-          <div className={cn(
-            'px-2 py-1 rounded-md',
-            isPositive ? 'bg-neon-green/10' : 'bg-neon-pink/10'
-          )}>
-            <span className={cn(
-              'text-sm font-mono font-medium',
-              isPositive ? 'text-neon-green' : 'text-neon-pink'
-            )}>
-              {isPositive ? '+' : ''}{user.totalPnlPercent.toFixed(2)}%
-            </span>
-          </div>
-        </div>
+            {/* PNL */}
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg',
+                isPositive ? 'bg-neon-green/20' : 'bg-neon-pink/20'
+              )}>
+                {isPositive ? (
+                  <TrendingUp className="size-4 text-neon-green" />
+                ) : (
+                  <TrendingDown className="size-4 text-neon-pink" />
+                )}
+                <span className={cn(
+                  'font-mono font-medium',
+                  isPositive ? 'text-neon-green' : 'text-neon-pink'
+                )}>
+                  {isPositive ? '+' : ''}{user.totalPnl.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                </span>
+              </div>
+              
+              <div className={cn(
+                'px-2 py-1 rounded-md',
+                isPositive ? 'bg-neon-green/10' : 'bg-neon-pink/10'
+              )}>
+                <span className={cn(
+                  'text-sm font-mono font-medium',
+                  isPositive ? 'text-neon-green' : 'text-neon-pink'
+                )}>
+                  {isPositive ? '+' : ''}{user.totalPnlPercent.toFixed(2)}%
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </GlassCard>
   )

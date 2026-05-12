@@ -24,6 +24,7 @@ interface AppState {
   assets: Asset[]
   allocations: Record<AssetType, number>
   initialPrices: Record<AssetType, number | null>
+  pricesLoaded: boolean
 
   leaderboard: LeaderboardEntry[]
   leaderboardData: {
@@ -126,6 +127,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   assets: initialAssets,
   allocations: { BTC: 0, GOLD: 0, EUR: 0 },
   initialPrices: createInitialPrices(),
+  pricesLoaded: false,
   leaderboard: [],
   leaderboardData: null,
   prizePool: mockPrizePool,
@@ -260,7 +262,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       const updatedAssets = state.assets.map((asset) => {
         const newPrice = priceMap[asset.id]
         if (newPrice) {
-          const change24h = asset.price > 0 ? ((newPrice - asset.price) / asset.price) * 100 : 0
+          // Only calculate change if prices were already loaded, otherwise set to 0
+          const change24h = state.pricesLoaded && asset.price > 0 
+            ? ((newPrice - asset.price) / asset.price) * 100 
+            : 0
           return { ...asset, price: newPrice, change24h: Math.round(change24h * 100) / 100 }
         }
         return asset
@@ -295,6 +300,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         assets: updatedAssets,
         initialPrices: freshInitialPrices,
+        pricesLoaded: true,
         user: {
           ...state.user,
           portfolioValue: optimisticValue,

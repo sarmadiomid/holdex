@@ -27,6 +27,7 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
   const setAllocations = useAppStore((state) => state.setAllocations)
   const user = useAppStore((state) => state.user)
   const setAssetLeverage = useAppStore((state) => state.setAssetLeverage)
+  const pricesLoaded = useAppStore((state) => state.pricesLoaded)
 
   const currentAllocation = allocations[asset.id] || 0
   const allocatedValue = (user.balance * currentAllocation) / 100
@@ -100,12 +101,16 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
           </div>
           <div>
             <h3 className="font-semibold text-foreground">{asset.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              ${asset.price.toLocaleString(undefined, {
-                minimumFractionDigits: asset.id === 'EUR' ? 4 : 2,
-                maximumFractionDigits: asset.id === 'EUR' ? 4 : 2
-              })}
-            </p>
+            {!pricesLoaded ? (
+              <div className="h-4 w-20 bg-muted/30 rounded animate-pulse" />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                ${asset.price.toLocaleString(undefined, {
+                  minimumFractionDigits: asset.id === 'EUR' ? 4 : 2,
+                  maximumFractionDigits: asset.id === 'EUR' ? 4 : 2
+                })}
+              </p>
+            )}
           </div>
         </div>
 

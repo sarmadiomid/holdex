@@ -30,6 +30,28 @@ export function useSocket({ token, enabled }: UseSocketOptions) {
       debugLog('[socket] Disconnected from backend')
     })
 
+    s.on('connect_error', (error) => {
+      debugLog('[socket] Connection error:', error.message)
+      
+      // Handle rate limiting errors
+      if (error.message.includes('rate limit')) {
+        debugLog('[socket] Rate limit exceeded - connection blocked temporarily')
+        // TODO: Show user-friendly message in UI
+      } else if (error.message.includes('Authentication')) {
+        debugLog('[socket] Authentication failed - invalid or expired token')
+        // TODO: Redirect to login or refresh token
+      } else if (error.message.includes('concurrent connections')) {
+        debugLog('[socket] Too many concurrent connections from this device')
+        // TODO: Show message to close other tabs
+      }
+    })
+
+    s.on('rate_limit_error', (data: { message: string; event: string; retryAfter: number }) => {
+      debugLog(`[socket] Rate limit exceeded for event: ${data.event}. Retry after ${data.retryAfter}s`)
+      // TODO: Show toast notification to user
+      // Example: "You're sending messages too quickly. Please wait {retryAfter} seconds"
+    })
+
     s.on('price_update', (data: { symbol: string; price: number; timestamp: number }) => {
       updateAssetPrice(data.symbol, data.price)
     })
@@ -62,6 +84,8 @@ export function useSocket({ token, enabled }: UseSocketOptions) {
       s.off('user_update')
       s.off('connect')
       s.off('disconnect')
+      s.off('connect_error')
+      s.off('rate_limit_error')
     }
   }, [token, enabled, setupHandlers])
 

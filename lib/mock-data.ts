@@ -1,14 +1,14 @@
 import type { Asset, User, LeaderboardEntry, StoreItem, AssetType, PrizePool, EarnTask } from './types'
 
-// Initial asset data
+// Initial asset data - prices will be loaded from backend
 export const initialAssets: Asset[] = [
   {
     id: 'BTC',
     name: 'Bitcoin',
     symbol: 'BTC',
     icon: '₿',
-    price: 67234.50,
-    change24h: 2.34,
+    price: 0,
+    change24h: 0,
     allocation: 0,
     color: 'neon-gold'
   },
@@ -17,8 +17,8 @@ export const initialAssets: Asset[] = [
     name: 'Gold',
     symbol: 'XAU',
     icon: '🥇',
-    price: 2341.80,
-    change24h: 0.87,
+    price: 0,
+    change24h: 0,
     allocation: 0,
     color: 'neon-cyan'
   },
@@ -27,8 +27,8 @@ export const initialAssets: Asset[] = [
     name: 'Euro/USD',
     symbol: 'EUR/USD',
     icon: '💶',
-    price: 1.17,
-    change24h: 0.23,
+    price: 0,
+    change24h: 0,
     allocation: 0,
     color: 'neon-pink'
   }
