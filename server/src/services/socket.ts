@@ -150,6 +150,61 @@ export function broadcastAllPrices() {
   ioInstance.emit('prices_snapshot', latestPrices)
 }
 
+export async function recalcUserSilent(user: IUser) {
+  const prices = latestPrices
+  if (!prices['BTC/USD'] || !prices['XAU/USD'] || !prices['EUR/USD']) {
+    return user
+  }
+
+  const currentPrices: Record<string, number> = {
+    BTC: prices['BTC/USD'].price,
+    GOLD: prices['XAU/USD'].price,
+    EUR: prices['EUR/USD'].price,
+  }
+
+  const initialPrices: Record<string, number> = {}
+  if (user.initialPrices.BTC) initialPrices.BTC = user.initialPrices.BTC
+  if (user.initialPrices.GOLD) initialPrices.GOLD = user.initialPrices.GOLD
+  if (user.initialPrices.EUR) initialPrices.EUR = user.initialPrices.EUR
+
+  const portfolio = calculatePortfolioValue(
+    user.balance,
+    user.allocations,
+    initialPrices,
+    currentPrices,
+    user.leverage,
+    user.assetLeverages || undefined,
+  )
+
+  // Reset if portfolio hits 0 — this MUST broadcast to sync the client
+  if (portfolio.value <= 0) {
+    user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
+    user.initialPrices = { BTC: null, GOLD: null, EUR: null }
+    user.balance = 0
+    user.portfolioValue = 0
+    user.totalPnl = 0
+    user.totalPnlPercent = 0
+    await user.save()
+
+    broadcastAllocationUpdate(user.telegramId, { BTC: 0, GOLD: 0, EUR: 0 })
+    broadcastUserUpdate(user.telegramId, {
+      portfolioValue: 0,
+      totalPnl: 0,
+      totalPnlPercent: 0,
+    })
+    return user
+  }
+
+  // Silent DB update — no broadcast to avoid race with client display
+  await User.findByIdAndUpdate(user._id, {
+    portfolioValue: portfolio.value,
+    totalPnl: portfolio.pnl,
+    totalPnlPercent: portfolio.pnlPercent,
+  })
+
+  return user
+}
+
 export async function recalcAndBroadcastUser(user: IUser) {
   const prices = latestPrices
   if (!prices['BTC/USD'] || !prices['XAU/USD'] || !prices['EUR/USD']) {

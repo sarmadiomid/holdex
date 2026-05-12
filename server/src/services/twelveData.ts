@@ -1,75 +1,50 @@
 import WebSocket from 'ws'
 import { env } from '../config/env'
 import { logger } from '../utils/logger'
-import { broadcastPriceUpdate, recalcAndBroadcastUser } from './socket'
+import { broadcastPriceUpdate, recalcUserSilent } from './socket'
 import { User, IUser } from '../db/models/User'
 
 const SYMBOLS = ['BTC/USD', 'XAU/USD', 'EUR/USD']
 const RECONNECT_DELAY_MS = 5000
 const HEARTBEAT_INTERVAL_MS = 10000
-const BATCH_WINDOW_MS = 500
+const PORTFOLIO_SYNC_INTERVAL_MS = 10000
 const CHUNK_SIZE = 50
 
 let ws: WebSocket | null = null
 let heartbeatInterval: NodeJS.Timeout | null = null
+let portfolioSyncTimer: NodeJS.Timeout | null = null
 let isShuttingDown = false
 
-// --- Batch processing system ---
-let pendingSymbols = new Set<string>()
-let batchTimer: NodeJS.Timeout | null = null
-let isProcessingBatch = false
-
-function scheduleBatch() {
-  if (batchTimer) clearTimeout(batchTimer)
-  if (!isProcessingBatch) {
-    batchTimer = setTimeout(processBatch, BATCH_WINDOW_MS)
-  }
-}
-
+// --- Periodic portfolio sync (leaderboard/DB updates only, no broadcast) ---
 async function processUsersInChunks(users: IUser[]) {
   for (let i = 0; i < users.length; i += CHUNK_SIZE) {
     const chunk = users.slice(i, i + CHUNK_SIZE)
-    await Promise.allSettled(chunk.map(u => recalcAndBroadcastUser(u)))
+    await Promise.allSettled(chunk.map(u => recalcUserSilent(u)))
     if (i + CHUNK_SIZE < users.length) {
       await new Promise(resolve => setImmediate(resolve))
     }
   }
 }
 
-async function processBatch() {
-  if (isProcessingBatch) return
-  isProcessingBatch = true
-  batchTimer = null
+async function syncPortfolios() {
+  if (isShuttingDown) return
 
-  const symbolsToProcess = Array.from(pendingSymbols)
-  pendingSymbols.clear()
+  try {
+    const users = await User.find({
+      $or: [
+        { 'allocations.BTC': { $gt: 0 } },
+        { 'allocations.GOLD': { $gt: 0 } },
+        { 'allocations.EUR': { $gt: 0 } },
+      ],
+    })
 
-  for (const symbol of symbolsToProcess) {
-    try {
-      const users = await User.find({
-        [`allocations.${symbol}`]: { $gt: 0 },
-      })
-
-      logger.debug(`Batch processing ${symbol}: ${users.length} users`)
-
+    if (users.length > 0) {
+      logger.debug(`Portfolio sync: ${users.length} users`)
       await processUsersInChunks(users)
-    } catch (error) {
-      logger.error(`Error processing batch for ${symbol}`, { error })
     }
+  } catch (error) {
+    logger.error('Error syncing portfolios', { error })
   }
-
-  isProcessingBatch = false
-
-  if (pendingSymbols.size > 0) {
-    scheduleBatch()
-  }
-}
-
-function processPriceUpdate(normalizedSymbol: string, rawSymbol: string, price: number, timestamp: number) {
-  broadcastPriceUpdate(rawSymbol, price, timestamp)
-
-  pendingSymbols.add(normalizedSymbol)
-  scheduleBatch()
 }
 
 function connect() {
@@ -95,6 +70,9 @@ function connect() {
         ws.send(JSON.stringify({ action: 'heartbeat' }))
       }
     }, HEARTBEAT_INTERVAL_MS)
+
+    portfolioSyncTimer = setInterval(syncPortfolios, PORTFOLIO_SYNC_INTERVAL_MS)
+    logger.info(`Portfolio sync started (every ${PORTFOLIO_SYNC_INTERVAL_MS / 1000}s)`)
   })
 
   ws.on('message', async (data: WebSocket.Data) => {
@@ -103,10 +81,9 @@ function connect() {
 
       if (message.event === 'price') {
         const { symbol, price, timestamp } = message
-        const normalizedSymbol = normalizeSymbol(symbol)
 
-        if (normalizedSymbol) {
-          processPriceUpdate(normalizedSymbol, symbol, parseFloat(price), timestamp || Date.now())
+        if (normalizeSymbol(symbol)) {
+          broadcastPriceUpdate(symbol, parseFloat(price), timestamp || Date.now())
         }
       } else if (message.event === 'subscribe-status') {
         const successList = (message.success || []).map((s: any) => typeof s === 'string' ? s : s.symbol || s)
@@ -130,6 +107,7 @@ function connect() {
   ws.on('close', (code, reason) => {
     logger.warn('TwelveData WebSocket closed', { code, reason: reason.toString() })
     if (heartbeatInterval) clearInterval(heartbeatInterval)
+    if (portfolioSyncTimer) clearInterval(portfolioSyncTimer)
 
     if (!isShuttingDown) {
       logger.info(`Reconnecting in ${RECONNECT_DELAY_MS / 1000}s...`)
@@ -154,6 +132,7 @@ export function startTwelveData() {
 export function stopTwelveData() {
   isShuttingDown = true
   if (heartbeatInterval) clearInterval(heartbeatInterval)
+  if (portfolioSyncTimer) clearInterval(portfolioSyncTimer)
   if (ws) {
     ws.close()
     ws = null
