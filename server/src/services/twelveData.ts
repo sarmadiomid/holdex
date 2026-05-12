@@ -2,15 +2,75 @@ import WebSocket from 'ws'
 import { env } from '../config/env'
 import { logger } from '../utils/logger'
 import { broadcastPriceUpdate, recalcAndBroadcastUser } from './socket'
-import { User } from '../db/models/User'
+import { User, IUser } from '../db/models/User'
 
 const SYMBOLS = ['BTC/USD', 'XAU/USD', 'EUR/USD']
 const RECONNECT_DELAY_MS = 5000
 const HEARTBEAT_INTERVAL_MS = 10000
+const BATCH_WINDOW_MS = 500
+const CHUNK_SIZE = 50
 
 let ws: WebSocket | null = null
 let heartbeatInterval: NodeJS.Timeout | null = null
 let isShuttingDown = false
+
+// --- Batch processing system ---
+let pendingSymbols = new Set<string>()
+let batchTimer: NodeJS.Timeout | null = null
+let isProcessingBatch = false
+
+function scheduleBatch() {
+  if (batchTimer) clearTimeout(batchTimer)
+  if (!isProcessingBatch) {
+    batchTimer = setTimeout(processBatch, BATCH_WINDOW_MS)
+  }
+}
+
+async function processUsersInChunks(users: IUser[]) {
+  for (let i = 0; i < users.length; i += CHUNK_SIZE) {
+    const chunk = users.slice(i, i + CHUNK_SIZE)
+    await Promise.allSettled(chunk.map(u => recalcAndBroadcastUser(u)))
+    if (i + CHUNK_SIZE < users.length) {
+      await new Promise(resolve => setImmediate(resolve))
+    }
+  }
+}
+
+async function processBatch() {
+  if (isProcessingBatch) return
+  isProcessingBatch = true
+  batchTimer = null
+
+  const symbolsToProcess = Array.from(pendingSymbols)
+  pendingSymbols.clear()
+
+  for (const symbol of symbolsToProcess) {
+    try {
+      const users = await User.find({
+        [`allocations.${symbol}`]: { $gt: 0 },
+      })
+
+      logger.debug(`Batch processing ${symbol}: ${users.length} users`)
+
+      await processUsersInChunks(users)
+    } catch (error) {
+      logger.error(`Error processing batch for ${symbol}`, { error })
+    }
+  }
+
+  isProcessingBatch = false
+
+  if (pendingSymbols.size > 0) {
+    scheduleBatch()
+  }
+}
+
+function processPriceUpdate(normalizedSymbol: string, rawSymbol: string, price: number, timestamp: number) {
+  broadcastPriceUpdate(rawSymbol, price, timestamp)
+
+  pendingSymbols.add(normalizedSymbol)
+  scheduleBatch()
+}
 
 function connect() {
   if (isShuttingDown) return
@@ -46,17 +106,7 @@ function connect() {
         const normalizedSymbol = normalizeSymbol(symbol)
 
         if (normalizedSymbol) {
-          broadcastPriceUpdate(symbol, parseFloat(price), timestamp || Date.now())
-
-          const users = await User.find({
-            [`allocations.${normalizedSymbol}`]: { $gt: 0 },
-          })
-
-          logger.debug(`Price update for ${normalizedSymbol}: ${price}, users with allocations: ${users.length}`)
-
-          for (const user of users) {
-            await recalcAndBroadcastUser(user)
-          }
+          processPriceUpdate(normalizedSymbol, symbol, parseFloat(price), timestamp || Date.now())
         }
       } else if (message.event === 'subscribe-status') {
         const successList = (message.success || []).map((s: any) => typeof s === 'string' ? s : s.symbol || s)

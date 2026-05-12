@@ -6,6 +6,13 @@ import { User, IUser } from '../db/models/User'
 import { calculatePortfolioValue } from '../services/portfolio'
 import * as jwt from 'jsonwebtoken'
 
+const MAX_CONNECTIONS_PER_IP = 5
+const RATE_LIMIT_WINDOW_MS = 10000
+const MAX_CONNECTIONS_PER_WINDOW = 3
+
+const ipConnections = new Map<string, Set<string>>()
+const ipRateLimit = new Map<string, number[]>()
+
 interface MarketPrice {
   symbol: string
   price: number
@@ -28,13 +35,18 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     normalizeOrigin(env.FRONTEND_URL),
     'http://localhost:3000',
   ]
+  if (env.ALLOWED_ORIGINS) {
+    allowedOrigins.push(
+      ...env.ALLOWED_ORIGINS.split(',').map((s) => normalizeOrigin(s.trim())),
+    )
+  }
 
   ioInstance = new Server(httpServer, {
     cors: {
       origin: (origin, callback) => {
         if (!origin) return callback(null, true)
         const normalized = normalizeOrigin(origin)
-        if (allowedOrigins.includes(normalized) || /\.vercel\.app$/.test(normalized) || /\.telegram\.org$/.test(normalized)) {
+        if (allowedOrigins.includes(normalized)) {
           return callback(null, true)
         }
         callback(new Error('Not allowed by CORS'), false)
@@ -45,6 +57,28 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
   ioInstance.use(async (socket, next) => {
     try {
+      const ip = socket.handshake.address
+
+      // --- Rate limiting ---
+      const now = Date.now()
+      const timestamps = ipRateLimit.get(ip) || []
+      const recent = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS)
+      if (recent.length >= MAX_CONNECTIONS_PER_WINDOW) {
+        logger.warn(`Socket rate limit exceeded for IP: ${ip}`)
+        return next(new Error('Connection rate limit exceeded'))
+      }
+      recent.push(now)
+      ipRateLimit.set(ip, recent)
+
+      const existing = ipConnections.get(ip) || new Set()
+      if (existing.size >= MAX_CONNECTIONS_PER_IP) {
+        logger.warn(`Max socket connections reached for IP: ${ip}`)
+        return next(new Error('Maximum connections reached'))
+      }
+      existing.add(socket.id)
+      ipConnections.set(ip, existing)
+
+      // --- Auth ---
       const s = socket as AuthSocket
       const token = socket.handshake.auth.token
       if (!token) {
@@ -70,6 +104,14 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
 
     socket.on('disconnect', () => {
       logger.info(`Socket disconnected: ${s.telegramId}`)
+      const ip = socket.handshake.address
+      const connections = ipConnections.get(ip)
+      if (connections) {
+        connections.delete(socket.id)
+        if (connections.size === 0) {
+          ipConnections.delete(ip)
+        }
+      }
     })
   })
 
