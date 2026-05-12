@@ -4,7 +4,7 @@ import { logger } from '../utils/logger'
 
 // 1. Connection Rate Limiter (per IP) - محدودیت سرعت اتصال
 const connectionLimiter = new RateLimiterMemory({
-  points: 3, // 3 اتصال
+  points: 6, // 6 اتصال (تغییر از 3 به 6)
   duration: 10, // در 10 ثانیه
   blockDuration: 60, // بلاک 60 ثانیه اگر تخطی کرد
 })

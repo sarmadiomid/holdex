@@ -93,6 +93,12 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     )
     s.join(s.telegramId.toString())
 
+    // ✅ بلافاصله بعد از اتصال، قیمت‌های فعلی را برای کاربر ارسال کن
+    if (Object.keys(latestPrices).length > 0) {
+      socket.emit('prices_snapshot', latestPrices)
+      logger.debug(`Sent price snapshot to user ${s.telegramId}`)
+    }
+
     socket.on('disconnect', (reason) => {
       logger.info(
         `Socket disconnected: User ${s.telegramId} - Reason: ${reason}`,

@@ -5,7 +5,7 @@
 این پیاده‌سازی شامل **4 لایه امنیتی** برای محافظت در برابر حملات DDoS و Spam است:
 
 ### 1️⃣ Connection Rate Limiter (محدودیت سرعت اتصال)
-- **محدودیت**: 3 اتصال در 10 ثانیه از هر IP
+- **محدودیت**: 6 اتصال در 10 ثانیه از هر IP (تغییر از 3 به 6)
 - **بلاک**: 60 ثانیه اگر تخطی کرد
 - **هدف**: جلوگیری از reconnection spam و botnet attacks
 
@@ -72,7 +72,7 @@ socket.on('custom_event', rateLimitedHandler(async (socket, data) => {
 ```typescript
 // تنظیمات Connection Rate Limiter
 const connectionLimiter = new RateLimiterMemory({
-  points: 3,           // تعداد اتصال مجاز
+  points: 6,           // تعداد اتصال مجاز (تغییر از 3 به 6)
   duration: 10,        // در چند ثانیه
   blockDuration: 60,   // مدت زمان بلاک (ثانیه)
 })
@@ -173,7 +173,7 @@ const redisClient = new Redis({ /* config */ })
 
 const connectionLimiter = new RateLimiterRedis({
   storeClient: redisClient,
-  points: 3,
+  points: 6,  // تغییر از 3 به 6
   duration: 10,
 })
 ```

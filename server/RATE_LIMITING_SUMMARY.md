@@ -39,7 +39,7 @@ npm install rate-limiter-flexible
 
 | نوع محدودیت | مقدار | توضیح |
 |------------|-------|-------|
-| **Connection Rate** | 3 در 10 ثانیه | جلوی reconnection spam |
+| **Connection Rate** | 6 در 10 ثانیه | جلوی reconnection spam |
 | **Concurrent Connections** | 5 اتصال همزمان | جلوی DDoS |
 | **Message Rate** | 2 در 1 ثانیه | جلوی message spam |
 | **Block Duration (Connection)** | 60 ثانیه | مدت بلاک اتصال |
@@ -52,7 +52,7 @@ npm install rate-limiter-flexible
 ```
 کاربر تلاش برای اتصال
     ↓
-[1] بررسی IP Rate Limit (3 در 10 ثانیه)
+[1] بررسی IP Rate Limit (6 در 10 ثانیه)
     ↓ OK
 [2] بررسی Concurrent Connections (حداکثر 5)
     ↓ OK
@@ -60,7 +60,9 @@ npm install rate-limiter-flexible
     ↓ OK
 [4] اتصال برقرار شد ✅
     ↓
-[5] هر پیام: بررسی Message Rate Limit (2 در 1 ثانیه)
+[5] دریافت فوری قیمت‌های فعلی (prices_snapshot)
+    ↓
+[6] هر پیام: بررسی Message Rate Limit (2 در 1 ثانیه)
 ```
 
 ---
@@ -69,8 +71,8 @@ npm install rate-limiter-flexible
 
 ### تست 1: Connection Rate Limit
 ```bash
-# تلاش برای 5 اتصال سریع
-# انتظار: 3 تا موفق، 2 تا بلاک
+# تلاش برای 8 اتصال سریع
+# انتظار: 6 تا موفق، 2 تا بلاک
 ```
 
 ### تست 2: Message Rate Limit
