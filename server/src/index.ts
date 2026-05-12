@@ -30,7 +30,7 @@ async function bootstrap() {
 
   app.use(helmet())
 
-  // CORS: normalize trailing slashes and allow any vercel.app subdomain
+  // CORS: only allow exact origins from whitelist
   const normalizeOrigin = (url: string) => url.replace(/\/+$/, '')
   const allowedOrigins = [
     normalizeOrigin(env.FRONTEND_URL),
