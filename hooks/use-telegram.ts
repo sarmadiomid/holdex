@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import type { TelegramWebApp, TelegramUser } from '@/lib/types'
+import { debugLog } from '@/lib/debug'
 
 interface UseTelegramReturn {
   webApp: TelegramWebApp | null
@@ -32,7 +33,7 @@ export function useTelegram(): UseTelegramReturn {
 
         setIsReady(true)
       } else {
-        console.log('[telegram] Running outside Telegram')
+        debugLog('[telegram] Running outside Telegram')
         setIsReady(true)
       }
     }
@@ -46,7 +47,7 @@ export function useTelegram(): UseTelegramReturn {
       if (webApp?.HapticFeedback) {
         webApp.HapticFeedback.impactOccurred(style)
       } else {
-        console.log('[telegram] Haptic impact:', style)
+        debugLog('[telegram] Haptic impact:', style)
       }
     }, [webApp]),
 
@@ -54,7 +55,7 @@ export function useTelegram(): UseTelegramReturn {
       if (webApp?.HapticFeedback) {
         webApp.HapticFeedback.notificationOccurred(type)
       } else {
-        console.log('[telegram] Haptic notification:', type)
+        debugLog('[telegram] Haptic notification:', type)
       }
     }, [webApp]),
 
@@ -62,7 +63,7 @@ export function useTelegram(): UseTelegramReturn {
       if (webApp?.HapticFeedback) {
         webApp.HapticFeedback.selectionChanged()
       } else {
-        console.log('[telegram] Haptic selection')
+        debugLog('[telegram] Haptic selection')
       }
     }, [webApp])
   }
@@ -81,20 +82,20 @@ export function useTelegram(): UseTelegramReturn {
 
       const timeout = setTimeout(() => {
         if (!resolved) {
-          console.log('[telegram] Invoice timeout - awaiting webhook confirmation')
+          debugLog('[telegram] Invoice timeout - awaiting webhook confirmation')
           resolveOnce('pending')
         }
       }, timeoutMs)
 
       if (webApp?.openInvoice) {
-        console.log('[telegram] Calling webApp.openInvoice with:', invoiceUrl)
+        debugLog('[telegram] Calling webApp.openInvoice with:', invoiceUrl)
         webApp.openInvoice(invoiceUrl, (status) => {
-          console.log('[telegram] openInvoice callback received status:', status)
+          debugLog('[telegram] openInvoice callback received status:', status)
           resolveOnce(status)
         })
-        console.log('[telegram] openInvoice called, awaiting callback...')
+        debugLog('[telegram] openInvoice called, awaiting callback...')
       } else {
-        console.log('[telegram] Mock payment for invoice:', invoiceUrl)
+        debugLog('[telegram] Mock payment for invoice:', invoiceUrl)
         setTimeout(() => resolveOnce('paid'), 1000)
       }
     })

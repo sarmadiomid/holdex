@@ -44,7 +44,7 @@ export function Profile({ onClose }: ProfileProps) {
           setReferralStats(data)
         }
       } catch (error) {
-        console.error('Failed to fetch referral stats:', error)
+        console.error(error)
       }
     }
     fetchReferralStats()

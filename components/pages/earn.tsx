@@ -45,7 +45,7 @@ export function EarnPage() {
           setReferralStats(data)
         }
       } catch (error) {
-        console.error('Failed to fetch referral stats:', error)
+        console.error(error)
       }
     }
     fetchReferralStats()
@@ -111,7 +111,7 @@ export function EarnPage() {
           haptic.notification('success')
         }
       } catch (error) {
-        console.error('Task completion error:', error)
+        console.error(error)
         haptic.notification('error')
         alert('Network error. Please try again.')
       } finally {

@@ -73,7 +73,7 @@ export function Leaderboard() {
           setLeaderboard(data)
         }
       } catch {
-        console.error('[leaderboard] Failed to fetch')
+        console.error('Failed to fetch leaderboard')
       } finally {
         setLoading(false)
       }

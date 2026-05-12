@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { getSocket, disconnectSocket } from '@/lib/socket'
 import { useAppStore } from '@/lib/store'
+import { debugLog } from '@/lib/debug'
 
 interface UseSocketOptions {
   token: string | null
@@ -22,11 +23,11 @@ export function useSocket({ token, enabled }: UseSocketOptions) {
     const s = getSocket(token)
 
     s.on('connect', () => {
-      console.log('[socket] Connected to backend')
+      debugLog('[socket] Connected to backend')
     })
 
     s.on('disconnect', () => {
-      console.log('[socket] Disconnected from backend')
+      debugLog('[socket] Disconnected from backend')
     })
 
     s.on('price_update', (data: { symbol: string; price: number; timestamp: number }) => {

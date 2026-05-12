@@ -18,11 +18,6 @@ import { useSocket } from '@/hooks/use-socket'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
-if (typeof window !== 'undefined') {
-  console.log('[app] NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL)
-  console.log('[app] Resolved BACKEND_URL:', BACKEND_URL)
-}
-
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
@@ -156,7 +151,6 @@ export function AppShell() {
         }
 
         if (!initData) {
-          console.log('[auth] Running outside Telegram — no auth possible')
           setAuthenticating(false)
           return
         }
@@ -176,8 +170,7 @@ export function AppShell() {
 
         const data = await res.json()
         useAppStore.getState().setAuthenticatedUser(data.user, data.token)
-      } catch (err) {
-        console.error('[auth] Error:', err)
+      } catch {
         setAuthError('Connection to server failed')
       } finally {
         setAuthenticating(false)

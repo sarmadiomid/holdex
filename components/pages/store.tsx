@@ -10,6 +10,7 @@ import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
 import { storeItems } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import { debugLog } from '@/lib/debug'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
@@ -62,9 +63,9 @@ export function StorePage() {
       }
 
       if (isTelegram) {
-        console.log('[store] Opening Telegram invoice:', data.invoiceUrl)
+        debugLog('[store] Opening Telegram invoice:', data.invoiceUrl)
         const status = await openInvoice(data.invoiceUrl)
-        console.log('[store] Invoice closed with status:', status)
+        debugLog('[store] Invoice closed with status:', status)
 
         if (status === 'paid') {
           haptic.notification('success')

@@ -8,6 +8,7 @@ import { PrizePoolCard } from '@/components/dashboard/prize-pool-card'
 import { AssetCard } from '@/components/dashboard/asset-card'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
+import { debugLog } from '@/lib/debug'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
@@ -39,7 +40,7 @@ export function Dashboard() {
           setLeaderboard(data)
         }
       } catch (err) {
-        console.error('Failed to fetch leaderboard:', err)
+        console.error(err)
       }
     }
 
@@ -57,13 +58,10 @@ export function Dashboard() {
         })
         if (res.ok) {
           const data = await res.json()
-          console.log('Position history API response:', data)
           setPositionHistory(data.history || [])
-        } else {
-          console.error('Position history API error:', res.status, await res.text())
         }
       } catch (err) {
-        console.error('Failed to fetch position history:', err)
+        console.error(err)
       } finally {
         setLoadingHistory(false)
       }

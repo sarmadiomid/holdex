@@ -392,7 +392,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ asset: assetId, leverage }),
-      }).catch(err => console.error('Failed to update asset leverage:', err))
+      }).catch(err => console.error(err))
     }
   },
 
