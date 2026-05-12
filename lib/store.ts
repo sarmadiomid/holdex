@@ -59,7 +59,13 @@ interface AppState {
   setAuthenticatedUser: (userData: User, token: string) => void
   updateAssetPrice: (twelveDataSymbol: string, price: number) => void
   setUserPrices: (data: Record<string, { symbol: string; price: number; timestamp: number }>) => void
-  updateUserFromSocket: (data: { portfolioValue?: number; totalPnl?: number; totalPnlPercent?: number }) => void
+  updateUserFromSocket: (data: { 
+    portfolioValue?: number
+    totalPnl?: number
+    totalPnlPercent?: number
+    assetLeverages?: Record<string, number>
+    initialPrices?: Record<string, number | null>
+  }) => void
   setAllocations: (allocations: Record<AssetType, number>) => void
   updatePortfolioValue: () => void
   setUser: (user: Partial<User>) => void
@@ -300,12 +306,28 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateUserFromSocket: (data) => {
-    set((state) => ({
-      user: {
-        ...state.user,
-        ...data,
-      },
-    }))
+    set((state) => {
+      const updates: Partial<User> = {}
+      
+      // Update portfolio values if provided
+      if (data.portfolioValue !== undefined) updates.portfolioValue = data.portfolioValue
+      if (data.totalPnl !== undefined) updates.totalPnl = data.totalPnl
+      if (data.totalPnlPercent !== undefined) updates.totalPnlPercent = data.totalPnlPercent
+      if (data.assetLeverages !== undefined) updates.assetLeverages = data.assetLeverages
+      
+      // Update initialPrices if provided (fixes race condition on allocation)
+      const newInitialPrices = data.initialPrices 
+        ? { ...state.initialPrices, ...data.initialPrices }
+        : state.initialPrices
+      
+      return {
+        user: {
+          ...state.user,
+          ...updates,
+        },
+        initialPrices: newInitialPrices,
+      }
+    })
   },
 
   setAllocations: (allocations) => set({ allocations }),

@@ -90,6 +90,11 @@ router.post(
 
       const updated = await recalcAndBroadcastUser(user)
       broadcastAllocationUpdate(user.telegramId, allocations)
+      
+      // Send initialPrices immediately to prevent race condition with price_update
+      broadcastUserUpdate(user.telegramId, {
+        initialPrices: updated.initialPrices,
+      })
 
       logger.info(`Allocation set for user ${telegramId}: ${JSON.stringify(allocations)}`)
 
