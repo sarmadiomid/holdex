@@ -5,13 +5,7 @@ import { logger } from '../utils/logger'
 import { User, IUser } from '../db/models/User'
 import { calculatePortfolioValue } from '../services/portfolio'
 import * as jwt from 'jsonwebtoken'
-
-const MAX_CONNECTIONS_PER_IP = 5
-const RATE_LIMIT_WINDOW_MS = 10000
-const MAX_CONNECTIONS_PER_WINDOW = 3
-
-const ipConnections = new Map<string, Set<string>>()
-const ipRateLimit = new Map<string, number[]>()
+import { socketRateLimitMiddleware } from '../middleware/socketRateLimit'
 
 interface MarketPrice {
   symbol: string
@@ -55,33 +49,19 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
     },
   })
 
+  // Layer 1: Rate Limiting (قبل از authentication)
+  ioInstance.use(socketRateLimitMiddleware)
+
+  // Layer 2: Authentication (بعد از rate limiting)
   ioInstance.use(async (socket, next) => {
     try {
-      const ip = socket.handshake.address
-
-      // --- Rate limiting ---
-      const now = Date.now()
-      const timestamps = ipRateLimit.get(ip) || []
-      const recent = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS)
-      if (recent.length >= MAX_CONNECTIONS_PER_WINDOW) {
-        logger.warn(`Socket rate limit exceeded for IP: ${ip}`)
-        return next(new Error('Connection rate limit exceeded'))
-      }
-      recent.push(now)
-      ipRateLimit.set(ip, recent)
-
-      const existing = ipConnections.get(ip) || new Set()
-      if (existing.size >= MAX_CONNECTIONS_PER_IP) {
-        logger.warn(`Max socket connections reached for IP: ${ip}`)
-        return next(new Error('Maximum connections reached'))
-      }
-      existing.add(socket.id)
-      ipConnections.set(ip, existing)
-
-      // --- Auth ---
       const s = socket as AuthSocket
       const token = socket.handshake.auth.token
+
       if (!token) {
+        logger.warn(
+          `Socket connection rejected: No token provided from IP ${socket.handshake.address}`,
+        )
         return next(new Error('Authentication required'))
       }
 
@@ -89,29 +69,34 @@ export function setupSocketIO(httpServer: HTTPServer): Server {
         userId: string
         telegramId: number
       }
+
       s.userId = decoded.userId
       s.telegramId = decoded.telegramId
+
+      logger.info(
+        `Socket authenticated successfully for user: ${s.telegramId} (${s.userId})`,
+      )
       next()
-    } catch {
-      next(new Error('Invalid token'))
+    } catch (error) {
+      logger.warn(
+        `Socket authentication failed from IP ${socket.handshake.address}:`,
+        error,
+      )
+      next(new Error('Invalid or expired token'))
     }
   })
 
   ioInstance.on('connection', (socket) => {
     const s = socket as AuthSocket
-    logger.info(`Socket connected: ${s.telegramId}`)
+    logger.info(
+      `Socket connected: User ${s.telegramId} (${s.userId}) from IP ${socket.handshake.address}`,
+    )
     s.join(s.telegramId.toString())
 
-    socket.on('disconnect', () => {
-      logger.info(`Socket disconnected: ${s.telegramId}`)
-      const ip = socket.handshake.address
-      const connections = ipConnections.get(ip)
-      if (connections) {
-        connections.delete(socket.id)
-        if (connections.size === 0) {
-          ipConnections.delete(ip)
-        }
-      }
+    socket.on('disconnect', (reason) => {
+      logger.info(
+        `Socket disconnected: User ${s.telegramId} - Reason: ${reason}`,
+      )
     })
   })
 
