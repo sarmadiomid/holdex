@@ -10,7 +10,8 @@ next.user-config.*
 # Environment variables
 .env
 .env.local
-.env*.local
+.env.*.local
+.env.production
 
 # Build outputs
 node_modules
@@ -24,3 +25,13 @@ server/node_modules/
 logs/
 *.log
 server/logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
