@@ -33,32 +33,40 @@ export function PortfolioCard() {
           )}
         </div>
 
-        {/* Value */}
-        {!pricesLoaded ? (
-          <div className="mb-4">
-            <div className="h-10 w-48 bg-muted/30 rounded animate-pulse mb-2" />
-            <div className="h-6 w-32 bg-muted/20 rounded animate-pulse" />
-          </div>
-        ) : (
-          <>
-            <motion.div 
-              className="mb-4"
-              key={user.portfolioValue}
-              initial={{ scale: 1.02 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 500 }}
-            >
-              <NeonText glow="cyan" className="text-4xl font-bold font-mono tracking-tight">
-                {user.portfolioValue.toLocaleString(undefined, { 
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2 
-                })}
-              </NeonText>
-              <span className="text-lg text-muted-foreground ml-2">HLX</span>
-            </motion.div>
+        {/* Value - always shown */}
+        <motion.div 
+          className="mb-4"
+          key={user.portfolioValue}
+          initial={{ scale: 1.02 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 500 }}
+        >
+          <NeonText glow="cyan" className="text-4xl font-bold font-mono tracking-tight">
+            {user.portfolioValue.toLocaleString(undefined, { 
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2 
+            })}
+          </NeonText>
+          <span className="text-lg text-muted-foreground ml-2">HLX</span>
+        </motion.div>
 
-            {/* PNL */}
-            <div className="flex items-center gap-4">
+        {/* PNL - loading text only for numbers */}
+        <div className="flex items-center gap-4">
+          {!pricesLoaded ? (
+            <>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/20">
+                <span className="font-mono font-medium text-muted-foreground/40 animate-pulse">
+                  ---.--
+                </span>
+              </div>
+              <div className="px-2 py-1 rounded-md bg-muted/10">
+                <span className="text-sm font-mono font-medium text-muted-foreground/30 animate-pulse">
+                  --.--%
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
               <div className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg',
                 isPositive ? 'bg-neon-green/20' : 'bg-neon-pink/20'
@@ -90,9 +98,9 @@ export function PortfolioCard() {
                   {isPositive ? '+' : ''}{user.totalPnlPercent.toFixed(2)}%
                 </span>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </GlassCard>
   )

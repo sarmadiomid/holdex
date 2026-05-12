@@ -99,10 +99,16 @@ export function AssetCard({ asset, index }: AssetCardProps) {
           {/* Price Info */}
           <div className="text-right">
             {!pricesLoaded ? (
-              <>
-                <div className="h-6 w-24 bg-muted/30 rounded animate-pulse mb-1" />
-                <div className="h-4 w-16 bg-muted/20 rounded animate-pulse ml-auto" />
-              </>
+              <div className="space-y-1">
+                <span className="font-mono font-semibold text-muted-foreground/40 animate-pulse">
+                  $---.--
+                </span>
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-sm font-mono text-muted-foreground/30 animate-pulse">
+                    --.--%
+                  </span>
+                </div>
+              </div>
             ) : (
               <>
                 <motion.p 
