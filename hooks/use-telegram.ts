@@ -89,11 +89,16 @@ export function useTelegram(): UseTelegramReturn {
 
       if (webApp?.openInvoice) {
         debugLog('[telegram] Calling webApp.openInvoice with:', invoiceUrl)
-        webApp.openInvoice(invoiceUrl, (status) => {
-          debugLog('[telegram] openInvoice callback received status:', status)
-          resolveOnce(status)
-        })
-        debugLog('[telegram] openInvoice called, awaiting callback...')
+        try {
+          webApp.openInvoice(invoiceUrl, (status) => {
+            debugLog('[telegram] openInvoice callback received status:', status)
+            resolveOnce(status)
+          })
+          debugLog('[telegram] openInvoice called, awaiting callback...')
+        } catch (err) {
+          debugLog('[telegram] openInvoice threw an error:', err)
+          resolveOnce('failed')
+        }
       } else {
         debugLog('[telegram] Mock payment for invoice:', invoiceUrl)
         setTimeout(() => resolveOnce('paid'), 1000)
