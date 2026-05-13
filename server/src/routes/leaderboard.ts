@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { User } from '../db/models/User'
-import { getLeaderboard } from '../services/leaderboard'
+import { getLeaderboard, getWeekBoundaries } from '../services/leaderboard'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { logger } from '../utils/logger'
 
@@ -19,9 +19,12 @@ router.get('/leaderboard', authMiddleware, async (req: AuthRequest, res) => {
 
     let userRank = null
     if (user) {
+      // Rank within the current weekly cohort, not against this user's own
+      // per-row weekStart (which is unique per user and would always yield 1).
+      const { start, end } = getWeekBoundaries()
       const higherCount = await User.countDocuments({
         portfolioValue: { $gt: user.portfolioValue },
-        weekStart: user.weekStart,
+        weekStart: { $gte: start, $lt: end },
       })
       userRank = higherCount + 1
     }

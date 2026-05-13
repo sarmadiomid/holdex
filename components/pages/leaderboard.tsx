@@ -46,9 +46,18 @@ export function Leaderboard() {
   const season = leaderboardData?.season ?? 1
   const userPosition = leaderboardData?.userPosition
 
-  const userRank = leaderboard.findIndex(e => e.user.id === user.id) + 1
+  // Leaderboard entries are keyed by telegramId (see lib/store.ts setLeaderboard),
+  // while user.id is the Mongo _id. Match on telegramId so userRank is accurate.
+  const userTelegramIdStr = user.telegramId !== undefined ? String(user.telegramId) : null
+  const backendUserRank = userPosition?.rank ?? 0
+  const localUserRank = userTelegramIdStr
+    ? leaderboard.findIndex(e => e.user.id === userTelegramIdStr) + 1
+    : 0
+  const userRank = backendUserRank || localUserRank
   const top15 = leaderboard.slice(0, 15)
-  const userEntry = leaderboard.find(e => e.user.id === user.id)
+  const userEntry = userTelegramIdStr
+    ? leaderboard.find(e => e.user.id === userTelegramIdStr)
+    : undefined
   const showUserBelowTop15 = userRank > 15 && userEntry
   const isUserInTop15 = userRank > 0 && userRank <= 15
 
