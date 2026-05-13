@@ -1,0 +1,6 @@
+process.env.NODE_ENV = process.env.NODE_ENV || 'test'
+process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/test'
+process.env.TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'test-bot-token'
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-with-at-least-32-characters'
+process.env.TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY || 'test-twelve-data-key'
+process.env.FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000'

@@ -479,7 +479,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Sync with backend
     if (token) {
       const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
-      fetch(`${BACKEND_URL}/api/allocation/asset-leverage`, {
+      fetch(`${BACKEND_URL}/api/asset-leverage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
