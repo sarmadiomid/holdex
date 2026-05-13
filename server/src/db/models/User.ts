@@ -70,6 +70,7 @@ const UserSchema = new Schema<IUser>(
 )
 
 UserSchema.index({ totalPnlPercent: -1 })
+UserSchema.index({ weekStart: 1, portfolioValue: -1 })
 UserSchema.index({ weekStart: -1, totalPnlPercent: -1 })
 
 export const User = mongoose.model<IUser>('User', UserSchema)

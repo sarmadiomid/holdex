@@ -104,37 +104,49 @@ export async function calculateAndSaveLeaderboard(): Promise<void> {
 
   logger.info(`Calculating leaderboard for season ${season}`)
 
-  const users = await User.find({ weekStart: { $gte: start } })
-    .sort({ portfolioValue: -1 })
-    .lean()
-
-  const entries = []
-
-  for (let i = 0; i < users.length; i++) {
-    const user = users[i]
-    const prize = DISTRIBUTION.find((d) => d.rank === i + 1)
-
-    entries.push({
-      userId: user._id,
-      telegramId: user.telegramId,
-      username: user.username || `user${user.telegramId}`,
-      firstName: user.firstName,
-      photoUrl: user.photoUrl,
-      portfolioValue: user.portfolioValue,
-      pnl: user.totalPnl,
-      pnlPercent: user.totalPnlPercent,
-      rank: i + 1,
-      season,
-      weekStart: start,
-      weekEnd: end,
-      prizeTon: prize?.tonAmount,
-    })
-  }
-
   await LeaderboardEntry.deleteMany({ season, weekStart: start })
-  await LeaderboardEntry.insertMany(entries)
 
-  logger.info(`Leaderboard saved: ${entries.length} entries for season ${season}`)
+  await User.aggregate([
+    { $match: { weekStart: { $gte: start } } },
+    { $sort: { portfolioValue: -1 } },
+    {
+      $setWindowFields: {
+        sortBy: { portfolioValue: -1 },
+        output: { rank: { $rowNumber: {} } }
+      },
+    } as any,
+    {
+      $project: {
+        _id: 0,
+        userId: '$_id',
+        telegramId: 1,
+        username: { $ifNull: ['$username', { $concat: ['user', { $toString: '$telegramId' }] }] },
+        firstName: 1,
+        photoUrl: 1,
+        portfolioValue: 1,
+        pnl: '$totalPnl',
+        pnlPercent: '$totalPnlPercent',
+        rank: 1,
+        season: { $literal: season },
+        weekStart: { $literal: start },
+        weekEnd: { $literal: end },
+        prizeTon: {
+          $switch: {
+            branches: [
+              { case: { $eq: ['$rank', 1] }, then: 250 },
+              { case: { $eq: ['$rank', 2] }, then: 150 },
+              { case: { $eq: ['$rank', 3] }, then: 100 },
+            ],
+            default: null,
+          }
+        }
+      }
+    },
+    { $merge: { into: 'leaderboardentries', whenMatched: 'replace' } },
+  ])
+
+  const count = await LeaderboardEntry.countDocuments({ season, weekStart: start })
+  logger.info(`Leaderboard saved: ${count} entries for season ${season}`)
 }
 
 export async function getLeaderboard(limit = 500) {
