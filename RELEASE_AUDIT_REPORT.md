@@ -3,7 +3,9 @@
 **Generated:** 2026-05-13
 **Auditor:** Senior full-stack / product / growth review
 **Scope:** Entire repository (frontend Next.js app + Express/MongoDB backend)
-**Overall Release Readiness Score:** **41 / 100** — **NOT READY** for public release
+**Overall Release Readiness Score:** **44 / 100** — **NOT READY** for public release
+
+> **Update (after merge of `main`):** Finding **C-1** (asset-leverage URL mismatch) was fixed in commit `e4c409d` / merge `beaa496` on `main` (frontend URL aligned to `/api/asset-leverage` in `lib/store.ts:482`, with a Vitest regression test at `server/src/__tests__/asset-leverage.test.ts`). C-1 below is marked **RESOLVED**. As a side effect, **I-1** (no tests) is now partially addressed — Vitest is wired into `server/` with one test. The remaining 11 critical blockers and the rest of the report are unchanged.
 
 ---
 
@@ -17,11 +19,11 @@ This report enumerates every finding with file/line citations and prescribes a m
 
 ---
 
-## 🔴 Critical Blockers (12 items)
+## 🔴 Critical Blockers (11 outstanding, 1 resolved)
 
 These MUST be fixed before launching to a public audience. Each one either loses money, breaks a core feature, or exposes the platform to abuse.
 
-### C-1. Asset-Leverage API endpoint is wired to the wrong URL — silently 404s
+### C-1. ~~Asset-Leverage API endpoint is wired to the wrong URL — silently 404s~~ **(RESOLVED in `beaa496`)**
 - **Issue:** Frontend POSTs to `/api/allocation/asset-leverage`, but the backend route is `/api/asset-leverage`.
 - **Files/Lines:**
   - Frontend: `lib/store.ts:482` — `fetch(\`${BACKEND_URL}/api/allocation/asset-leverage\`, ...)`
@@ -29,6 +31,7 @@ These MUST be fixed before launching to a public audience. Each one either loses
   - Backend mount: `server/src/index.ts:309` — `app.use('/api', allocationRoutes)` → real path is `POST /api/asset-leverage`
 - **Why critical:** Asset-specific leverage is a paid Stars feature on the Store screen. The optimistic UI sets local state but the backend never persists the change. After socket reconnect or a fresh login the user loses their leverage and there is no error toast (the catch is `.catch(err => console.error(err))`).
 - **Fix required:** Change frontend URL to `/api/asset-leverage` OR change backend to `router.post('/allocation/asset-leverage', ...)`. Pick one and align both. Add an integration test.
+- **Status:** Resolved on `main` — frontend was updated to `/api/asset-leverage` (`lib/store.ts:482`) and a Vitest regression test added at `server/src/__tests__/asset-leverage.test.ts`.
 
 ### C-2. "5x Leverage" Telegram Stars package is priced at 1 Star (~$0.02)
 - **Issue:** `lev_5x` is priced at **1 Star** in both the frontend mock data and the backend Stars pricing table. Surrounding packages cost 250 and 1000 Stars.
@@ -469,8 +472,8 @@ Quality-of-life improvements that won't block launch.
 ### 13. ⚠️ Critical Blockers vs Nice-to-Haves
 
 See top-level categorised sections above. Counts:
-- 🔴 Critical: **12**
-- 🟡 Important: **24**
+- 🔴 Critical: **11 outstanding** (12 originally; C-1 resolved in `beaa496`)
+- 🟡 Important: **24** (I-1 partially addressed — Vitest now configured server-side with 1 test)
 - 🟢 Nice to have: **15**
 
 ---
@@ -517,7 +520,7 @@ See top-level categorised sections above. Counts:
 Effort estimates assume one full-time engineer. Order is suggested critical-path.
 
 ### Day 1 (must-do before any public link is shared)
-1. **C-1** Fix `/api/asset-leverage` URL mismatch and add a smoke test. *(~30 min)*
+1. ~~**C-1** Fix `/api/asset-leverage` URL mismatch and add a smoke test.~~ ✅ Done in `beaa496`.
 2. **C-2** Set `lev_5x.starsPrice` to its intended value in `mock-data.ts` AND `routes/stars.ts`. *(~10 min)*
 3. **C-6** Replace `holdextest_bot` with the prod bot from env. *(~30 min)*
 4. **C-11** Write a minimal `README.md` with local dev + deployment notes. *(~2 h)*
