@@ -70,10 +70,15 @@ async function bootstrap() {
     update_id: z.number().int(),
     pre_checkout_query: z.object({
       id: z.string().min(1),
+      from: z.object({ id: z.number().int() }),
+      currency: z.string().min(1),
+      total_amount: z.number().int().positive(),
       invoice_payload: z.string().min(1),
     }).optional(),
     message: z.object({
       successful_payment: z.object({
+        currency: z.string().min(1),
+        total_amount: z.number().int().positive(),
         invoice_payload: z.string().min(1),
         telegram_payment_charge_id: z.string().min(1),
       }).optional(),
@@ -88,6 +93,10 @@ async function bootstrap() {
   // Track processed update IDs to prevent replay attacks
   const processedUpdateIds = new Set<number>()
   const MAX_PROCESSED_IDS = 10000 // Limit memory usage
+
+  // Track processed telegram_payment_charge_ids to prevent double-crediting
+  const processedChargeIds = new Set<string>()
+  const MAX_CHARGE_IDS = 10000
 
   app.post('/telegram-webhook', express.json(), async (req, res) => {
     try {
@@ -134,67 +143,96 @@ async function bootstrap() {
 
       // Handle pre-checkout query (must answer within 10 seconds)
       if (update.pre_checkout_query) {
-        const { id: queryId, invoice_payload: payload } = update.pre_checkout_query
+        const { id: queryId, from: payer, currency, total_amount, invoice_payload: payload } = update.pre_checkout_query
         
+        const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
+        const reject = async (msg: string) => {
+          await fetch(answerUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pre_checkout_query_id: queryId, ok: false, error_message: msg }),
+          })
+        }
+
         try {
+          // Validate currency is XTR (Telegram Stars)
+          if (currency !== 'XTR') {
+            logger.warn('Non-XTR currency in pre-checkout', { currency, total_amount })
+            await reject('Invalid currency')
+            return res.json({ ok: true })
+          }
+
           const rawPayload = JSON.parse(payload)
           const payloadResult = PayloadSchema.safeParse(rawPayload)
           if (!payloadResult.success) {
             logger.warn('Invalid pre-checkout payload', { errors: payloadResult.error.flatten() })
-            const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
-            await fetch(answerUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pre_checkout_query_id: queryId, ok: false, error_message: 'Invalid payload' }),
-            })
+            await reject('Invalid payload')
             return res.json({ ok: true })
           }
-          const { packageId } = payloadResult.data
-          
-          if (STARS_PACKAGES[packageId]) {
-            // Approve the checkout
-            const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
-            await fetch(answerUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pre_checkout_query_id: queryId, ok: true }),
-            })
-            logger.info('Approved pre-checkout query', { queryId, packageId })
-          } else {
-            // Reject with error
-            const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
-            await fetch(answerUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                pre_checkout_query_id: queryId, 
-                ok: false, 
-                error_message: 'Invalid package' 
-              }),
-            })
-            logger.warn('Rejected pre-checkout query - invalid package', { queryId, packageId })
+          const { packageId, telegramId } = payloadResult.data
+
+          // Verify the payer matches the intended user (prevents invoice URL theft)
+          if (payer.id !== telegramId) {
+            logger.warn('Payer mismatch in pre-checkout', { payerId: payer.id, expectedTelegramId: telegramId })
+            await reject('Payer mismatch')
+            return res.json({ ok: true })
           }
-        } catch (error) {
-          logger.error('Error processing pre-checkout query', { error, queryId })
-          const answerUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`
+
+          const pkg = STARS_PACKAGES[packageId]
+          if (!pkg) {
+            await reject('Invalid package')
+            logger.warn('Rejected pre-checkout query - invalid package', { queryId, packageId })
+            return res.json({ ok: true })
+          }
+
+          // Verify the amount matches the package price
+          if (total_amount !== pkg.starsPrice) {
+            logger.warn('Price mismatch in pre-checkout', { expected: pkg.starsPrice, received: total_amount, packageId })
+            await reject('Price mismatch')
+            return res.json({ ok: true })
+          }
+
+          // Approve the checkout
           await fetch(answerUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              pre_checkout_query_id: queryId, 
-              ok: false, 
-              error_message: 'Processing error' 
-            }),
+            body: JSON.stringify({ pre_checkout_query_id: queryId, ok: true }),
           })
+          logger.info('Approved pre-checkout query', { queryId, packageId, userId: telegramId })
+        } catch (error) {
+          logger.error('Error processing pre-checkout query', { error, queryId })
+          await reject('Processing error')
         }
       }
 
       // Handle successful payment
       if (update.message?.successful_payment) {
         const { successful_payment } = update.message
-        const { invoice_payload, telegram_payment_charge_id } = successful_payment
+        const { currency, total_amount, invoice_payload, telegram_payment_charge_id } = successful_payment
         
         try {
+          // Reject non-XTR payments (defense-in-depth)
+          if (currency !== 'XTR') {
+            logger.warn('Non-XTR currency in successful payment', { currency, chargeId: telegram_payment_charge_id })
+            return res.json({ ok: true })
+          }
+
+          // Deduplicate by charge ID to prevent double-crediting
+          if (processedChargeIds.has(telegram_payment_charge_id)) {
+            logger.warn('Duplicate payment charge ID detected', { chargeId: telegram_payment_charge_id })
+            return res.json({ ok: true })
+          }
+          processedChargeIds.add(telegram_payment_charge_id)
+          if (processedChargeIds.size > MAX_CHARGE_IDS) {
+            const iterator = processedChargeIds.values()
+            for (let i = 0; i < 1000; i++) {
+              const value = iterator.next().value
+              if (value !== undefined) {
+                processedChargeIds.delete(value)
+              }
+            }
+          }
+
           const rawPayload = JSON.parse(invoice_payload)
           const payloadResult = PayloadSchema.safeParse(rawPayload)
           if (!payloadResult.success) {
@@ -206,6 +244,17 @@ async function bootstrap() {
           const pkg = STARS_PACKAGES[packageId]
           if (!pkg) {
             logger.error('Invalid package in payment', { packageId, telegramId })
+            return res.json({ ok: true })
+          }
+
+          // Verify paid amount matches expected price
+          if (total_amount !== pkg.starsPrice) {
+            logger.error('Price mismatch in successful payment', {
+              expected: pkg.starsPrice,
+              received: total_amount,
+              packageId,
+              telegramId,
+            })
             return res.json({ ok: true })
           }
 
@@ -234,7 +283,6 @@ async function bootstrap() {
             await Position.create({
               userId: user._id,
               type: 'store_purchase',
-              asset: 'BTC',
               amount: 0,
               hlxValue: 0,
             })
@@ -279,7 +327,7 @@ async function bootstrap() {
   })
 
   if (env.TELEGRAM_WEBHOOK_URL) {
-    const webhookUrl = `${env.TELEGRAM_WEBHOOK_URL}/telegram-webhook`
+    const webhookUrl = `${env.TELEGRAM_WEBHOOK_URL.replace(/\/+$/, '')}/telegram-webhook`
     const success = await setupTelegramWebhook(webhookUrl, env.TELEGRAM_WEBHOOK_SECRET)
     if (success) {
       const info = await getWebhookInfo()
