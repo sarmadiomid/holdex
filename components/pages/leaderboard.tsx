@@ -189,9 +189,11 @@ export function Leaderboard() {
           <div className="absolute top-0 left-0 w-1 h-full bg-neon-cyan rounded-l-xl" />
           <div className="flex items-center justify-between pl-2">
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-gradient-to-br from-neon-cyan/30 to-neon-pink/20 border border-neon-cyan/40 flex items-center justify-center text-base font-bold shrink-0 text-neon-cyan shadow-lg shadow-neon-cyan/20">
-                #{userRank}
-              </div>
+              {userRank > 0 && (
+                <div className="size-10 rounded-xl bg-gradient-to-br from-neon-cyan/30 to-neon-pink/20 border border-neon-cyan/40 flex items-center justify-center text-base font-bold shrink-0 text-neon-cyan shadow-lg shadow-neon-cyan/20">
+                  #{userRank}
+                </div>
+              )}
               <div className="size-10 rounded-full bg-gradient-to-br from-neon-cyan to-neon-pink flex items-center justify-center shrink-0">
                 <span className="text-sm font-bold text-background">{user.firstName?.charAt(0) ?? '?'}</span>
               </div>
