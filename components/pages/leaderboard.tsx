@@ -46,7 +46,9 @@ export function Leaderboard() {
   const season = leaderboardData?.season ?? 1
   const userPosition = leaderboardData?.userPosition
 
-  const userRank = leaderboardData?.userPosition?.rank ?? 0
+  const userRank = user.telegramId
+    ? leaderboard.findIndex(e => e.user.id === String(user.telegramId)) + 1
+    : leaderboard.findIndex(e => e.user.id === user.id) + 1
   const top15 = leaderboard.slice(0, 15)
   const userEntry = user.telegramId
     ? leaderboard.find(e => e.user.id === String(user.telegramId))
