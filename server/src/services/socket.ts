@@ -10,6 +10,7 @@ import { socketRateLimitMiddleware } from '../middleware/socketRateLimit'
 interface MarketPrice {
   symbol: string
   price: number
+  change24h: number
   timestamp: number
 }
 
@@ -113,10 +114,11 @@ export function broadcastPriceUpdate(
   symbol: string,
   price: number,
   timestamp: number,
+  change24h: number = 0,
 ) {
-  latestPrices[symbol] = { symbol, price, timestamp }
+  latestPrices[symbol] = { symbol, price, change24h, timestamp }
   if (ioInstance) {
-    ioInstance.emit('price_update', { symbol, price, timestamp })
+    ioInstance.emit('price_update', { symbol, price, change24h, timestamp })
   }
 }
 

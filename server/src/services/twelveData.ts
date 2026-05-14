@@ -77,7 +77,7 @@ function connect() {
     if (!hasReceivedRealPrices) {
       logger.info('Broadcasting initial prices immediately...')
       Object.entries(INITIAL_PRICES).forEach(([symbol, price]) => {
-        broadcastPriceUpdate(symbol, price, Date.now())
+        broadcastPriceUpdate(symbol, price, Date.now(), 0)
       })
     }
 
@@ -96,7 +96,7 @@ function connect() {
       const message = JSON.parse(data.toString())
 
       if (message.event === 'price') {
-        const { symbol, price, timestamp } = message
+        const { symbol, price, timestamp, change_percentage } = message
 
         if (normalizeSymbol(symbol)) {
           // ✅ اولین بار که قیمت واقعی دریافت شد
@@ -105,7 +105,8 @@ function connect() {
             logger.info('✅ First real price received from TwelveData - switching from initial prices')
           }
           
-          broadcastPriceUpdate(symbol, parseFloat(price), timestamp || Date.now())
+          const change24h = change_percentage !== undefined ? parseFloat(change_percentage) : 0
+          broadcastPriceUpdate(symbol, parseFloat(price), timestamp || Date.now(), change24h)
         }
       } else if (message.event === 'subscribe-status') {
         const successList = (message.success || []).map((s: any) => typeof s === 'string' ? s : s.symbol || s)

@@ -52,11 +52,11 @@ export function useSocket({ token, enabled }: UseSocketOptions) {
       // Example: "You're sending messages too quickly. Please wait {retryAfter} seconds"
     })
 
-    s.on('price_update', (data: { symbol: string; price: number; timestamp: number }) => {
-      updateAssetPrice(data.symbol, data.price)
+    s.on('price_update', (data: { symbol: string; price: number; change24h: number; timestamp: number }) => {
+      updateAssetPrice(data.symbol, data.price, data.change24h)
     })
 
-    s.on('prices_snapshot', (data: Record<string, { symbol: string; price: number; timestamp: number }>) => {
+    s.on('prices_snapshot', (data: Record<string, { symbol: string; price: number; change24h: number; timestamp: number }>) => {
       setUserPrices(data)
     })
 

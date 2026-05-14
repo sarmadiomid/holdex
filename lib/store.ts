@@ -58,8 +58,8 @@ interface AppState {
   completeTask: (taskId: string) => void
   setToken: (token: string | null) => void
   setAuthenticatedUser: (userData: User, token: string) => void
-  updateAssetPrice: (twelveDataSymbol: string, price: number) => void
-  setUserPrices: (data: Record<string, { symbol: string; price: number; timestamp: number }>) => void
+  updateAssetPrice: (twelveDataSymbol: string, price: number, change24h?: number) => void
+  setUserPrices: (data: Record<string, { symbol: string; price: number; change24h: number; timestamp: number }>) => void
   updateUserFromSocket: (data: { 
     portfolioValue?: number
     totalPnl?: number
@@ -187,7 +187,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   }),
 
-  updateAssetPrice: (twelveDataSymbol, price) => {
+  updateAssetPrice: (twelveDataSymbol, price, change24hFromServer) => {
     const assetId = TWELVE_DATA_TO_ASSET[twelveDataSymbol]
     if (!assetId) return
 
@@ -196,8 +196,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (assetIndex === -1) return state
 
       const updatedAssets = [...state.assets]
-      const oldPrice = updatedAssets[assetIndex].price
-      const change24h = oldPrice > 0 ? ((price - oldPrice) / oldPrice) * 100 : 0
+      const change24h = change24hFromServer ?? (updatedAssets[assetIndex].price > 0 ? ((price - updatedAssets[assetIndex].price) / updatedAssets[assetIndex].price) * 100 : 0)
       updatedAssets[assetIndex] = {
         ...updatedAssets[assetIndex],
         price,
@@ -245,13 +244,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setUserPrices: (data) => {
-    const priceMap: Record<string, number> = {}
+    const priceMap: Record<string, { price: number; change24h: number }> = {}
     const freshInitialPrices = { ...get().initialPrices }
 
     for (const [symbol, item] of Object.entries(data)) {
       const assetId = TWELVE_DATA_TO_ASSET[symbol]
       if (assetId) {
-        priceMap[assetId] = item.price
+        priceMap[assetId] = { price: item.price, change24h: item.change24h }
         if (freshInitialPrices[assetId] === null) {
           freshInitialPrices[assetId] = item.price
         }
@@ -260,13 +259,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set((state) => {
       const updatedAssets = state.assets.map((asset) => {
-        const newPrice = priceMap[asset.id]
-        if (newPrice) {
-          // Only calculate change if prices were already loaded, otherwise set to 0
-          const change24h = state.pricesLoaded && asset.price > 0 
-            ? ((newPrice - asset.price) / asset.price) * 100 
-            : 0
-          return { ...asset, price: newPrice, change24h: Math.round(change24h * 100) / 100 }
+        const item = priceMap[asset.id]
+        if (item) {
+          const change24h = item.change24h ?? (state.pricesLoaded && asset.price > 0 
+            ? ((item.price - asset.price) / asset.price) * 100 
+            : 0)
+          return { ...asset, price: item.price, change24h: Math.round(change24h * 100) / 100 }
         }
         return asset
       })

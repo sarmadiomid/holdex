@@ -34,6 +34,7 @@ export function disconnectSocket() {
 export interface PriceUpdateEvent {
   symbol: string
   price: number
+  change24h: number
   timestamp: number
 }
 
@@ -41,6 +42,7 @@ export interface PricesSnapshotEvent {
   [symbol: string]: {
     symbol: string
     price: number
+    change24h: number
     timestamp: number
   }
 }
