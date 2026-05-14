@@ -2,7 +2,6 @@
 
 import { create } from 'zustand'
 import type { Asset, User, AssetType, LeaderboardEntry, Transaction, PrizePool, EarnTask, PositionHistoryEntry } from './types'
-import { initialAssets, mockPrizePool, earnTasks } from './mock-data'
 
 interface BackendLeaderboardEntry {
   rank: number
@@ -124,16 +123,45 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   isAuthenticated: false,
   token: null,
-  assets: initialAssets,
+  assets: [
+    { id: 'BTC', name: 'Bitcoin', symbol: 'BTC', icon: '₿', price: 0, change24h: 0, allocation: 0, color: 'neon-gold' },
+    { id: 'GOLD', name: 'Gold', symbol: 'XAU', icon: '🥇', price: 0, change24h: 0, allocation: 0, color: 'neon-cyan' },
+    { id: 'EUR', name: 'Euro/USD', symbol: 'EUR/USD', icon: '💶', price: 0, change24h: 0, allocation: 0, color: 'neon-pink' },
+  ],
   allocations: { BTC: 0, GOLD: 0, EUR: 0 },
   initialPrices: createInitialPrices(),
   pricesLoaded: false,
   leaderboard: [],
   leaderboardData: null,
-  prizePool: mockPrizePool,
+  prizePool: {
+    totalTon: 500,
+    distribution: [
+      { rank: 1, percentage: 40, tonAmount: 200 },
+      { rank: 2, percentage: 25, tonAmount: 125 },
+      { rank: 3, percentage: 15, tonAmount: 75 },
+      { rank: 4, percentage: 10, tonAmount: 50 },
+      { rank: 5, percentage: 5, tonAmount: 25 },
+      { rank: 6, percentage: 3, tonAmount: 15 },
+      { rank: 7, percentage: 2, tonAmount: 10 },
+    ],
+    endsAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    totalParticipants: 0,
+    season: 1,
+    phase: 'active',
+    nextPhaseStartsAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+  },
   transactions: [],
   positionHistory: [],
-  earnTasks,
+  earnTasks: [
+    { id: 'follow-twitter', title: 'Follow us on Twitter', description: 'Follow @HoldexApp on Twitter for updates', reward: 500, type: 'follow', url: 'https://twitter.com/HoldexApp', icon: '𝕏', completed: false },
+    { id: 'follow-telegram', title: 'Join Telegram Channel', description: 'Join our official Telegram channel', reward: 500, type: 'follow', url: 'https://t.me/holdex_channel', icon: '✈️', completed: false },
+    { id: 'watch-tutorial', title: 'Watch Tutorial Video', description: 'Learn how to maximize your profits', reward: 300, type: 'watch', url: 'https://youtube.com/watch?v=tutorial', icon: '📺', completed: false },
+    { id: 'visit-website', title: 'Visit Our Website', description: 'Check out the full Holdex platform', reward: 200, type: 'visit', url: 'https://holdex.app', icon: '🌐', completed: false },
+    { id: 'share-app', title: 'Share with Friends', description: 'Share Holdex with 3 friends', reward: 1000, type: 'share', icon: '🔗', completed: false },
+    { id: 'invite-5', title: 'Invite 5 Friends', description: 'Invite 5 friends to join Holdex', reward: 2500, type: 'invite', icon: '👥', completed: false },
+    { id: 'follow-instagram', title: 'Follow on Instagram', description: 'Follow @holdex.app on Instagram', reward: 500, type: 'follow', url: 'https://instagram.com/holdex.app', icon: '📸', completed: false },
+    { id: 'watch-demo', title: 'Watch Platform Demo', description: 'Watch our 2-minute platform demo', reward: 300, type: 'watch', url: 'https://youtube.com/watch?v=demo', icon: '🎬', completed: false },
+  ],
   activeTab: 'dashboard',
 
   isTourCompleted: typeof window !== 'undefined' ? localStorage.getItem('holdex_tour_completed') === 'true' : false,
@@ -233,6 +261,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       return {
         assets: updatedAssets,
+        pricesLoaded: true,
         user: {
           ...state.user,
           portfolioValue: optimisticValue,

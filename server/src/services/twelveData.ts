@@ -10,18 +10,10 @@ const HEARTBEAT_INTERVAL_MS = 10000
 const PORTFOLIO_SYNC_INTERVAL_MS = 10000
 const CHUNK_SIZE = 50
 
-// قیمت‌های اولیه برای broadcast سریع (fallback تا زمانی که TwelveData وصل شود)
-const INITIAL_PRICES = {
-  'BTC/USD': 67234.50,
-  'XAU/USD': 2341.80,
-  'EUR/USD': 1.17
-}
-
 let ws: WebSocket | null = null
 let heartbeatInterval: NodeJS.Timeout | null = null
 let portfolioSyncTimer: NodeJS.Timeout | null = null
 let isShuttingDown = false
-let hasReceivedRealPrices = false
 
 // --- Periodic portfolio sync (leaderboard/DB updates only, no broadcast) ---
 async function processUsersInChunks(users: IUser[]) {
@@ -73,14 +65,6 @@ function connect() {
     )
     logger.info(`Subscribed to: ${SYMBOLS.join(', ')}`)
 
-    // ✅ Broadcast قیمت‌های اولیه بلافاصله بعد از اتصال
-    if (!hasReceivedRealPrices) {
-      logger.info('Broadcasting initial prices immediately...')
-      Object.entries(INITIAL_PRICES).forEach(([symbol, price]) => {
-        broadcastPriceUpdate(symbol, price, Date.now(), 0)
-      })
-    }
-
     heartbeatInterval = setInterval(() => {
       if (ws?.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ action: 'heartbeat' }))
@@ -99,12 +83,6 @@ function connect() {
         const { symbol, price, timestamp, change_percentage } = message
 
         if (normalizeSymbol(symbol)) {
-          // ✅ اولین بار که قیمت واقعی دریافت شد
-          if (!hasReceivedRealPrices) {
-            hasReceivedRealPrices = true
-            logger.info('✅ First real price received from TwelveData - switching from initial prices')
-          }
-          
           const change24h = change_percentage !== undefined ? parseFloat(change_percentage) : 0
           broadcastPriceUpdate(symbol, parseFloat(price), timestamp || Date.now(), change24h)
         }
@@ -131,9 +109,6 @@ function connect() {
     logger.warn('TwelveData WebSocket closed', { code, reason: reason.toString() })
     if (heartbeatInterval) clearInterval(heartbeatInterval)
     if (portfolioSyncTimer) clearInterval(portfolioSyncTimer)
-
-    // Reset flag تا در reconnect دوباره قیمت‌های اولیه broadcast شود
-    hasReceivedRealPrices = false
 
     if (!isShuttingDown) {
       logger.info(`Reconnecting in ${RECONNECT_DELAY_MS / 1000}s...`)

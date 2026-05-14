@@ -8,7 +8,15 @@ import { GlassCard } from '@/components/ui/glass-card'
 import { NeonText } from '@/components/ui/neon-text'
 import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
-import { storeItems } from '@/lib/mock-data'
+const storeItems = [
+  { id: 'hlx_1000', name: '1,000 HLX', description: 'Starter pack for new investors', starsPrice: 50, type: 'hlx', value: 1000 },
+  { id: 'hlx_5000', name: '5,000 HLX', description: 'Popular choice for active traders', starsPrice: 200, type: 'hlx', value: 5000 },
+  { id: 'hlx_10000', name: '10,000 HLX', description: 'Best value package', starsPrice: 350, type: 'hlx', value: 10000 },
+  { id: 'hlx_50000', name: '50,000 HLX', description: 'Whale tier investment', starsPrice: 1500, type: 'hlx', value: 50000 },
+  { id: 'lev_2x', name: '2x Leverage', description: 'Double your gains (and losses)', starsPrice: 250, type: 'leverage', value: 2 },
+  { id: 'lev_5x', name: '5x Leverage', description: 'High risk, high reward', starsPrice: 1, type: 'leverage', value: 5 },
+  { id: 'lev_10x', name: '10x Leverage', description: 'Maximum power mode', starsPrice: 1000, type: 'leverage', value: 10 },
+]
 import { cn } from '@/lib/utils'
 import { debugLog } from '@/lib/debug'
 
