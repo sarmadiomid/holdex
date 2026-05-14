@@ -184,54 +184,41 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
     let newBalance = Math.max(0, Math.round(totalValue * 100) / 100)
     const pnl = Math.round((totalValue - user.balance) * 100) / 100
 
-    // Use transaction to ensure atomicity of user update + position creation
-    const session = await user.db.startSession()
-    try {
-      await session.withTransaction(async () => {
-        // Create all sell positions
-        const sellPositions = soldPositions.map(({ asset, allocation, pnl: assetPnl }) => {
-          const allocatedAmount = user.balance * (allocation / 100)
-          const twelveSymbol = asset === 'BTC' ? 'BTC/USD' : asset === 'GOLD' ? 'XAU/USD' : 'EUR/USD'
-          const initialPrice = user.initialPrices[asset as 'BTC' | 'GOLD' | 'EUR']
-          const currentPrice = prices[twelveSymbol]?.price ?? initialPrice ?? 0
-          
-          return {
-            userId: user._id,
-            type: 'sell',
-            asset,
-            amount: allocation,
-            hlxValue: allocatedAmount + assetPnl,
-            pnl: assetPnl,
-            priceAtTime: currentPrice,
-          }
-        })
+    // Create sell position records (no transaction needed — sequential atomic ops)
+    const sellPositionDocs = soldPositions.map(({ asset, allocation, pnl: assetPnl }) => {
+      const allocatedAmount = user.balance * (allocation / 100)
+      const twelveSymbol = asset === 'BTC' ? 'BTC/USD' : asset === 'GOLD' ? 'XAU/USD' : 'EUR/USD'
+      const currentPrice = prices[twelveSymbol]?.price ?? user.initialPrices[asset as 'BTC' | 'GOLD' | 'EUR'] ?? 0
+      
+      return {
+        userId: user._id,
+        type: 'sell' as const,
+        asset,
+        amount: allocation,
+        hlxValue: Math.round((allocatedAmount + assetPnl) * 100) / 100,
+        pnl: Math.round(assetPnl * 100) / 100,
+        priceAtTime: currentPrice,
+      }
+    })
 
-        if (sellPositions.length > 0) {
-          await Position.create(sellPositions, { session })
-        }
-
-        // Reset all positions when balance hits 0
-        if (newBalance <= 0) {
-          user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
-          user.initialPrices = { BTC: null, GOLD: null, EUR: null }
-          user.balance = 0
-          user.portfolioValue = 0
-          user.totalPnl = 0
-          user.totalPnlPercent = 0
-        } else {
-          user.allocations = { BTC: 0, GOLD: 0, EUR: 0 }
-          user.initialPrices = { BTC: null, GOLD: null, EUR: null }
-          user.balance = newBalance
-          user.portfolioValue = newBalance
-          user.totalPnl = 0
-          user.totalPnlPercent = 0
-        }
-
-        await user.save({ session })
-      })
-    } finally {
-      await session.endSession()
+    if (sellPositionDocs.length > 0) {
+      await Position.create(sellPositionDocs)
     }
+
+    // Atomically reset user — use findOneAndUpdate to avoid any version/document conflicts
+    await User.findOneAndUpdate(
+      { _id: user._id },
+      {
+        $set: {
+          allocations: { BTC: 0, GOLD: 0, EUR: 0 },
+          initialPrices: { BTC: null, GOLD: null, EUR: null },
+          balance: Math.max(0, newBalance),
+          portfolioValue: Math.max(0, newBalance),
+          totalPnl: 0,
+          totalPnlPercent: 0,
+        },
+      },
+    )
 
     broadcastAllocationUpdate(user.telegramId, { BTC: 0, GOLD: 0, EUR: 0 })
     broadcastUserUpdate(user.telegramId, {

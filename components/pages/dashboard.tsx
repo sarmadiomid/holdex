@@ -180,7 +180,7 @@ export function Dashboard() {
                   Are you sure you want to sell all holdings?
                 </p>
                 <p className="text-xs text-muted-foreground text-center">
-                  Your balance of {user.balance.toFixed(2)} HLX will be updated with any profit or loss.
+                  Your portfolio of {user.portfolioValue.toFixed(2)} HLX will be returned to your wallet.
                 </p>
                 {sellError && (
                   <p className="text-xs text-neon-pink text-center">{sellError}</p>
