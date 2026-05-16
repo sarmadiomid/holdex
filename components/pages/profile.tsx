@@ -315,17 +315,6 @@ export function Profile({ onClose }: ProfileProps) {
             </Button>
             <Button
               variant="outline"
-              className="w-full justify-start"
-              onClick={() => {
-                haptic.impact('light')
-                // Add settings functionality
-              }}
-            >
-              <Settings className="size-4 mr-2" />
-              Settings
-            </Button>
-            <Button
-              variant="outline"
               className="w-full justify-start text-neon-pink border-neon-pink/30 hover:bg-neon-pink/10"
               onClick={() => {
                 haptic.impact('medium')
