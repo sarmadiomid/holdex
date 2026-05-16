@@ -19,6 +19,7 @@ import leaderboardRoutes from './routes/leaderboard'
 import earnRoutes from './routes/earn'
 import referralRoutes from './routes/referral'
 import { generalLimiter } from './middleware/rateLimit'
+import mongoose from 'mongoose'
 import { User } from './db/models/User'
 import { Position } from './db/models/Position'
 import { MAX_HLX_BALANCE, STARS_PACKAGES } from './routes/stars'
@@ -89,6 +90,10 @@ async function bootstrap() {
   // Track processed update IDs to prevent replay attacks
   const processedUpdateIds = new Set<number>()
   const MAX_PROCESSED_IDS = 10000 // Limit memory usage
+
+  // Track processed payment charge IDs to prevent double-credit on webhook retry
+  const processedChargeIds = new Set<string>()
+  const MAX_CHARGE_IDS = 5000
 
   app.post('/telegram-webhook', express.json(), async (req, res) => {
     try {
@@ -194,7 +199,23 @@ async function bootstrap() {
       if (update.message?.successful_payment) {
         const { successful_payment } = update.message
         const { invoice_payload, telegram_payment_charge_id } = successful_payment
-        
+
+        // Idempotency check — reject duplicate charge IDs
+        if (processedChargeIds.has(telegram_payment_charge_id)) {
+          logger.warn('Duplicate payment charge_id — possible webhook retry', {
+            chargeId: telegram_payment_charge_id,
+          })
+          return res.json({ ok: true })
+        }
+        processedChargeIds.add(telegram_payment_charge_id)
+        if (processedChargeIds.size > MAX_CHARGE_IDS) {
+          const iterator = processedChargeIds.values()
+          for (let i = 0; i < 500; i++) {
+            const value = iterator.next().value
+            if (value !== undefined) processedChargeIds.delete(value)
+          }
+        }
+
         try {
           const rawPayload = JSON.parse(invoice_payload)
           const payloadResult = PayloadSchema.safeParse(rawPayload)
@@ -203,7 +224,7 @@ async function bootstrap() {
             return res.json({ ok: true })
           }
           const { packageId, telegramId } = payloadResult.data
-          
+
           const pkg = STARS_PACKAGES[packageId]
           if (!pkg) {
             logger.error('Invalid package in payment', { packageId, telegramId })
@@ -216,44 +237,65 @@ async function bootstrap() {
             return res.json({ ok: true })
           }
 
-          if (pkg.hlx) {
-            if (user.balance + pkg.hlx > MAX_HLX_BALANCE) {
-              logger.warn(`Blocked HLX purchase for user ${telegramId}: balance ${user.balance} + ${pkg.hlx} exceeds ${MAX_HLX_BALANCE}`, {
-                chargeId: telegram_payment_charge_id,
-              })
-              return res.json({ ok: true })
-            }
-            user.balance += pkg.hlx
-            user.portfolioValue += pkg.hlx
-            await Position.create({
-              userId: user._id,
-              type: 'store_purchase',
-              amount: pkg.hlx,
-              hlxValue: pkg.hlx,
+          // Use a MongoDB transaction to atomically update user + create position
+          const session = await mongoose.startSession()
+          try {
+            await session.withTransaction(async () => {
+              // Re-fetch user inside the transaction to get the latest state
+              const txUser = await User.findOne({ telegramId }).session(session)
+              if (!txUser) {
+                throw new Error('User not found in transaction')
+              }
+
+              if (pkg.hlx) {
+                if (txUser.balance + pkg.hlx > MAX_HLX_BALANCE) {
+                  throw new Error(`HLX cap exceeded for charge ${telegram_payment_charge_id}`)
+                }
+                txUser.balance += pkg.hlx
+                txUser.portfolioValue += pkg.hlx
+
+                await txUser.save({ session })
+
+                await Position.create([{
+                  userId: txUser._id,
+                  type: 'store_purchase',
+                  amount: pkg.hlx,
+                  hlxValue: pkg.hlx,
+                }], { session })
+
+                logger.info(`User ${telegramId} purchased ${pkg.hlx} HLX for ${pkg.starsPrice} stars`, {
+                  chargeId: telegram_payment_charge_id,
+                })
+              }
+
+              if (pkg.leverage) {
+                txUser.leverage = pkg.leverage
+                await txUser.save({ session })
+
+                await Position.create([{
+                  userId: txUser._id,
+                  type: 'store_purchase',
+                  asset: 'BTC',
+                  amount: 0,
+                  hlxValue: 0,
+                }], { session })
+
+                logger.info(`User ${telegramId} purchased ${pkg.leverage}x leverage for ${pkg.starsPrice} stars`, {
+                  chargeId: telegram_payment_charge_id,
+                })
+              }
+
+              if (!pkg.hlx && !pkg.leverage) {
+                throw new Error(`Unknown package type: ${packageId}`)
+              }
             })
-            logger.info(`User ${telegramId} purchased ${pkg.hlx} HLX for ${pkg.starsPrice} stars`, {
-              chargeId: telegram_payment_charge_id,
-            })
+          } finally {
+            await session.endSession()
           }
 
-          if (pkg.leverage) {
-            user.leverage = pkg.leverage
-            await Position.create({
-              userId: user._id,
-              type: 'store_purchase',
-              asset: 'BTC',
-              amount: 0,
-              hlxValue: 0,
-            })
-            logger.info(`User ${telegramId} purchased ${pkg.leverage}x leverage for ${pkg.starsPrice} stars`, {
-              chargeId: telegram_payment_charge_id,
-            })
-          }
-
-          await user.save()
           logger.info('Payment processed successfully', { telegramId, packageId, chargeId: telegram_payment_charge_id })
         } catch (error) {
-          logger.error('Error processing successful payment', { error, invoice_payload })
+          logger.error('Error processing successful payment', { error, invoice_payload, chargeId: telegram_payment_charge_id })
         }
       }
 
