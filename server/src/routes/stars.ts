@@ -9,11 +9,12 @@ import { createStarsInvoiceLink } from '../services/telegram'
 
 const router = Router()
 
+export const MAX_HLX_BALANCE = 1000
+
 export const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; starsPrice: number }> = {
-  'hlx_1000': { hlx: 1000, starsPrice: 50 },
-  'hlx_5000': { hlx: 5000, starsPrice: 200 },
-  'hlx_10000': { hlx: 10000, starsPrice: 350 },
-  'hlx_50000': { hlx: 50000, starsPrice: 1500 },
+  'hlx_100': { hlx: 100, starsPrice: 5 },
+  'hlx_250': { hlx: 250, starsPrice: 12 },
+  'hlx_500': { hlx: 500, starsPrice: 25 },
   'lev_2x': { leverage: 2, starsPrice: 250 },
   'lev_5x': { leverage: 5, starsPrice: 1 },
   'lev_10x': { leverage: 10, starsPrice: 1000 },
@@ -35,6 +36,19 @@ router.post(
       const pkg = STARS_PACKAGES[packageId]
       if (!pkg) {
         return res.status(400).json({ error: 'Invalid package' })
+      }
+
+      // Check balance cap before creating invoice
+      if (pkg.hlx) {
+        const user = await User.findOne({ telegramId })
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' })
+        }
+        if (user.balance + pkg.hlx > MAX_HLX_BALANCE) {
+          return res.status(400).json({
+            error: `Cannot purchase. This package would exceed your maximum allowed balance of ${MAX_HLX_BALANCE.toLocaleString()} HLX.`,
+          })
+        }
       }
 
       // Create human-readable title and description

@@ -21,7 +21,7 @@ import referralRoutes from './routes/referral'
 import { generalLimiter } from './middleware/rateLimit'
 import { User } from './db/models/User'
 import { Position } from './db/models/Position'
-import { STARS_PACKAGES } from './routes/stars'
+import { MAX_HLX_BALANCE, STARS_PACKAGES } from './routes/stars'
 
 async function bootstrap() {
   await connectDB()
@@ -217,6 +217,12 @@ async function bootstrap() {
           }
 
           if (pkg.hlx) {
+            if (user.balance + pkg.hlx > MAX_HLX_BALANCE) {
+              logger.warn(`Blocked HLX purchase for user ${telegramId}: balance ${user.balance} + ${pkg.hlx} exceeds ${MAX_HLX_BALANCE}`, {
+                chargeId: telegram_payment_charge_id,
+              })
+              return res.json({ ok: true })
+            }
             user.balance += pkg.hlx
             user.portfolioValue += pkg.hlx
             await Position.create({

@@ -521,8 +521,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       user: {
         ...state.user,
-        balance: Math.max(0, state.user.balance + amount),
-        portfolioValue: Math.max(0, state.user.portfolioValue + amount),
+        balance: Math.min(1000, Math.max(0, state.user.balance + amount)),
+        portfolioValue: Math.min(1000, Math.max(0, state.user.portfolioValue + amount)),
       },
     }))
   },

@@ -8,11 +8,12 @@ import { GlassCard } from '@/components/ui/glass-card'
 import { NeonText } from '@/components/ui/neon-text'
 import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
+const MAX_HLX_BALANCE = 1000
+
 const storeItems = [
-  { id: 'hlx_1000', name: '1,000 HLX', description: 'Starter pack for new investors', starsPrice: 50, type: 'hlx', value: 1000 },
-  { id: 'hlx_5000', name: '5,000 HLX', description: 'Popular choice for active traders', starsPrice: 200, type: 'hlx', value: 5000 },
-  { id: 'hlx_10000', name: '10,000 HLX', description: 'Best value package', starsPrice: 350, type: 'hlx', value: 10000 },
-  { id: 'hlx_50000', name: '50,000 HLX', description: 'Whale tier investment', starsPrice: 1500, type: 'hlx', value: 50000 },
+  { id: 'hlx_100', name: '100 HLX', description: 'Starter pack for new investors', starsPrice: 5, type: 'hlx', value: 100 },
+  { id: 'hlx_250', name: '250 HLX', description: 'Popular choice for active traders', starsPrice: 12, type: 'hlx', value: 250 },
+  { id: 'hlx_500', name: '500 HLX', description: 'Maximum package size', starsPrice: 25, type: 'hlx', value: 500 },
   { id: 'lev_2x', name: '2x Leverage', description: 'Double your gains (and losses)', starsPrice: 250, type: 'leverage', value: 2 },
   { id: 'lev_5x', name: '5x Leverage', description: 'High risk, high reward', starsPrice: 1, type: 'leverage', value: 5 },
   { id: 'lev_10x', name: '10x Leverage', description: 'Maximum power mode', starsPrice: 1000, type: 'leverage', value: 10 },
@@ -38,6 +39,14 @@ export function StorePage() {
 
   const handlePurchase = async (item: typeof storeItems[0]) => {
     if (purchasingId || !token) return
+
+    // Frontend cap check before attempting purchase
+    if (item.type === 'hlx' && item.value && user.balance + item.value > MAX_HLX_BALANCE) {
+      setError(`Cannot purchase. This package would exceed your maximum allowed balance of ${MAX_HLX_BALANCE.toLocaleString()} HLX.`)
+      haptic.notification('warning')
+      return
+    }
+
     setPurchasingId(item.id)
     setError(null)
     haptic.impact('medium')
@@ -170,13 +179,23 @@ export function StorePage() {
                 </NeonText>
               </div>
             </div>
-            {user.leverage > 1 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neon-gold/20 border border-neon-gold/40">
-                <Zap className="size-4 text-neon-gold" />
-                <span className="text-sm font-bold text-neon-gold">{user.leverage}x Active</span>
-              </div>
-            )}
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground">Max Wallet</p>
+              <p className="text-sm font-bold text-neon-cyan font-mono">{MAX_HLX_BALANCE.toLocaleString()} HLX</p>
+            </div>
           </div>
+          <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-neon-cyan to-blue-500 transition-all duration-500"
+              style={{ width: `${Math.min(100, (user.balance / MAX_HLX_BALANCE) * 100)}%` }}
+            />
+          </div>
+          {user.leverage > 1 && (
+            <div className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neon-gold/20 border border-neon-gold/40 w-fit">
+              <Zap className="size-4 text-neon-gold" />
+              <span className="text-sm font-bold text-neon-gold">{user.leverage}x Leverage Active</span>
+            </div>
+          )}
         </GlassCard>
       </motion.div>
 
@@ -202,6 +221,7 @@ export function StorePage() {
             const isPurchasing = purchasingId === item.id
             const isSuccess = successId === item.id
             const isBestValue = index === hlxItems.length - 1
+            const isOverCap = item.value ? user.balance + item.value > MAX_HLX_BALANCE : false
 
             return (
               <motion.div
@@ -210,14 +230,14 @@ export function StorePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + index * 0.07 }}
               >
-                <GlassCard hover className="h-full flex flex-col gap-3">
+                <GlassCard hover={!isOverCap} className={cn('h-full flex flex-col gap-3', isOverCap && 'opacity-50')}>
                   <div className="flex items-start justify-between">
-                    <div className="size-10 rounded-lg bg-neon-cyan/20 border border-neon-cyan/40 flex items-center justify-center">
-                      <Coins className="size-5 text-neon-cyan" />
+                    <div className={cn('size-10 rounded-lg border flex items-center justify-center', isOverCap ? 'bg-muted/20 border-border/30' : 'bg-neon-cyan/20 border-neon-cyan/40')}>
+                      <Coins className={cn('size-5', isOverCap ? 'text-muted-foreground' : 'text-neon-cyan')} />
                     </div>
                     {isBestValue && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-neon-pink/20 text-neon-pink border border-neon-pink/40 font-medium">
-                        Best Value
+                        Max Cap
                       </span>
                     )}
                   </div>
@@ -229,16 +249,23 @@ export function StorePage() {
 
                   <Button
                     onClick={() => handlePurchase(item)}
-                    disabled={!!purchasingId}
+                    disabled={isOverCap || !!purchasingId}
                     className={cn(
                       'w-full gap-1.5 text-sm transition-all',
                       isSuccess
                         ? 'bg-neon-green/20 border-neon-green/40 text-neon-green'
-                        : 'bg-neon-cyan/20 hover:bg-neon-cyan/30 text-neon-cyan border border-neon-cyan/40'
+                        : isOverCap
+                          ? 'bg-muted/20 text-muted-foreground border border-border/30 cursor-not-allowed'
+                          : 'bg-neon-cyan/20 hover:bg-neon-cyan/30 text-neon-cyan border border-neon-cyan/40'
                     )}
+                    title={isOverCap ? `Your wallet cannot exceed ${MAX_HLX_BALANCE.toLocaleString()} HLX` : undefined}
                   >
                     <AnimatePresence mode="wait">
-                      {isPurchasing ? (
+                      {isOverCap ? (
+                        <motion.span key="cap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-[11px]">
+                          Wallet Full
+                        </motion.span>
+                      ) : isPurchasing ? (
                         <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                           <Loader2 className="size-4 animate-spin" />
                         </motion.span>
