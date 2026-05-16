@@ -16,7 +16,7 @@ const PositionSchema = new Schema<IPosition>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     type: {
       type: String,
-      enum: ['buy', 'sell', 'allocate', 'store_purchase'],
+      enum: ['buy', 'sell', 'allocate', 'store_purchase', 'reward'],
       required: true,
     },
     asset: { type: String, enum: ['BTC', 'GOLD', 'EUR'] },

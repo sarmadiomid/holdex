@@ -86,8 +86,8 @@ router.post(
       // Create position record for task completion
       await Position.create({
         userId: user._id,
-        type: 'store_purchase',
-        amount: 0,
+        type: 'reward',
+        amount: reward,
         hlxValue: reward,
       })
 

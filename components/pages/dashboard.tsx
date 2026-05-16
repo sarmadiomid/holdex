@@ -280,24 +280,28 @@ export function Dashboard() {
                   <div className="flex items-center gap-3">
                     <div
                       className={
-                        entry.type === 'sell'
-                          ? 'size-8 rounded-full flex items-center justify-center bg-neon-pink/10'
-                          : entry.type === 'allocate'
-                          ? 'size-8 rounded-full flex items-center justify-center bg-neon-cyan/10'
-                          : 'size-8 rounded-full flex items-center justify-center bg-neon-green/10'
+                      entry.type === 'sell'
+                        ? 'size-8 rounded-full flex items-center justify-center bg-neon-pink/10'
+                        : entry.type === 'allocate'
+                        ? 'size-8 rounded-full flex items-center justify-center bg-neon-cyan/10'
+                        : entry.type === 'reward'
+                        ? 'size-8 rounded-full flex items-center justify-center bg-neon-gold/10'
+                        : 'size-8 rounded-full flex items-center justify-center bg-neon-green/10'
                       }
                     >
                       {entry.type === 'sell' ? (
                         <TrendingDown className="size-4 text-neon-pink" />
                       ) : entry.type === 'allocate' ? (
                         <Minus className="size-4 text-neon-cyan" />
+                      ) : entry.type === 'reward' ? (
+                        <TrendingUp className="size-4 text-neon-gold" />
                       ) : (
                         <TrendingUp className="size-4 text-neon-green" />
                       )}
                     </div>
                     <div>
                       <p className="text-sm font-medium">
-                        {entry.type === 'sell' ? 'Sell' : entry.type === 'allocate' ? 'Allocate' : entry.type}
+                        {entry.type === 'sell' ? 'Sell' : entry.type === 'allocate' ? 'Allocate' : entry.type === 'reward' ? 'Reward' : entry.type}
                         {entry.asset ? ` ${entry.asset}` : ''}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -330,8 +334,10 @@ export function Dashboard() {
                         )
                       ) : entry.type === 'allocate' ? (
                         <>{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
-                      ) : entry.type === 'store_purchase' ? (
+                      ) :                       entry.type === 'store_purchase' ? (
                         <>-{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
+                      ) : entry.type === 'reward' ? (
+                        <>+{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
                       ) : (
                         <>{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
                       )}
@@ -345,6 +351,7 @@ export function Dashboard() {
                       )}
                       {entry.type === 'sell' && (entry.pnl === undefined || Math.abs(entry.pnl) <= 0.01) && 'Received'}
                       {entry.type === 'store_purchase' && 'Spent'}
+                      {entry.type === 'reward' && 'Earned'}
                       {entry.type === 'buy' && 'Bought'}
                     </p>
                   </div>

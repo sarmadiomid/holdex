@@ -11,9 +11,10 @@ import { useTelegram } from '@/hooks/use-telegram'
 const MAX_HLX_BALANCE = 1000
 
 const storeItems = [
-  { id: 'hlx_100', name: '100 HLX', description: 'Starter pack for new investors', starsPrice: 5, type: 'hlx', value: 100 },
-  { id: 'hlx_250', name: '250 HLX', description: 'Popular choice for active traders', starsPrice: 12, type: 'hlx', value: 250 },
-  { id: 'hlx_500', name: '500 HLX', description: 'Maximum package size', starsPrice: 25, type: 'hlx', value: 500 },
+  { id: 'hlx_50', name: '50 HLX', description: 'Micro pack for quick starts', starsPrice: 10, type: 'hlx', value: 50 },
+  { id: 'hlx_100', name: '100 HLX', description: 'Starter pack for new investors', starsPrice: 20, type: 'hlx', value: 100 },
+  { id: 'hlx_250', name: '250 HLX', description: 'Popular choice for active traders', starsPrice: 40, type: 'hlx', value: 250 },
+  { id: 'hlx_500', name: '500 HLX', description: 'Maximum package size', starsPrice: 70, type: 'hlx', value: 500 },
   { id: 'lev_2x', name: '2x Leverage', description: 'Double your gains (and losses)', starsPrice: 250, type: 'leverage', value: 2 },
   { id: 'lev_5x', name: '5x Leverage', description: 'High risk, high reward', starsPrice: 1, type: 'leverage', value: 5 },
   { id: 'lev_10x', name: '10x Leverage', description: 'Maximum power mode', starsPrice: 1000, type: 'leverage', value: 10 },

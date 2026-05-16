@@ -137,7 +137,7 @@ export interface Transaction {
 // Position History entry
 export interface PositionHistoryEntry {
   id: string
-  type: 'buy' | 'sell' | 'allocate' | 'store_purchase'
+  type: 'buy' | 'sell' | 'allocate' | 'store_purchase' | 'reward'
   asset?: AssetType
   amount: number
   hlxValue: number

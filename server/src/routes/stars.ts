@@ -12,9 +12,10 @@ const router = Router()
 export const MAX_HLX_BALANCE = 1000
 
 export const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; starsPrice: number }> = {
-  'hlx_100': { hlx: 100, starsPrice: 5 },
-  'hlx_250': { hlx: 250, starsPrice: 12 },
-  'hlx_500': { hlx: 500, starsPrice: 25 },
+  'hlx_50': { hlx: 50, starsPrice: 10 },
+  'hlx_100': { hlx: 100, starsPrice: 20 },
+  'hlx_250': { hlx: 250, starsPrice: 40 },
+  'hlx_500': { hlx: 500, starsPrice: 70 },
   'lev_2x': { leverage: 2, starsPrice: 250 },
   'lev_5x': { leverage: 5, starsPrice: 1 },
   'lev_10x': { leverage: 10, starsPrice: 1000 },
