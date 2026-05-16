@@ -135,7 +135,7 @@ export function broadcastAllocationUpdate(
   allocations: { BTC: number; GOLD: number; EUR: number },
 ) {
   if (!ioInstance) return
-  ioInstance.emit('allocation_update', { telegramId, allocations })
+  ioInstance.to(telegramId.toString()).emit('allocation_update', { telegramId, allocations })
 }
 
 export function broadcastAllPrices() {
