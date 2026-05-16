@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import { env } from '../config/env'
 import { logger } from '../utils/logger'
-import { broadcastPriceUpdate, recalcUserSilent } from './socket'
+import { broadcastPriceUpdate, recalcUserSilent, getLatestPrices } from './socket'
 import { User, IUser } from '../db/models/User'
 
 const SYMBOLS = ['BTC/USD', 'XAU/USD', 'EUR/USD']
@@ -47,6 +47,31 @@ async function syncPortfolios() {
   }
 }
 
+async function fetchInitialQuotes() {
+  try {
+    const symbols = SYMBOLS.join(',')
+    const url = `https://api.twelvedata.com/quote?symbol=${symbols}&apikey=${env.TWELVE_DATA_API_KEY}`
+    const res = await fetch(url)
+    const data = await res.json() as Record<string, any>
+
+    let seeded = 0
+    for (const symbol of SYMBOLS) {
+      const quote = data[symbol]
+      if (quote && quote.price !== undefined) {
+        const price = parseFloat(quote.price)
+        const percentChange = quote.percent_change !== undefined ? parseFloat(quote.percent_change) : 0
+        broadcastPriceUpdate(symbol, price, Date.now(), percentChange)
+        seeded++
+      }
+    }
+    if (seeded > 0) {
+      logger.info(`Seeded ${seeded} symbols with 24h change via /quote REST API`)
+    }
+  } catch (error) {
+    logger.error('Failed to fetch initial quotes from REST API', { error })
+  }
+}
+
 function connect() {
   if (isShuttingDown) return
 
@@ -57,6 +82,7 @@ function connect() {
   ws.on('open', () => {
     logger.info('TwelveData WebSocket connected')
 
+    // Subscribe to symbols
     ws!.send(
       JSON.stringify({
         action: 'subscribe',
@@ -64,6 +90,9 @@ function connect() {
       }),
     )
     logger.info(`Subscribed to: ${SYMBOLS.join(', ')}`)
+
+    // Fetch initial quotes with 24h change from REST API
+    fetchInitialQuotes()
 
     heartbeatInterval = setInterval(() => {
       if (ws?.readyState === WebSocket.OPEN) {
@@ -83,7 +112,10 @@ function connect() {
         const { symbol, price, timestamp, change_percentage } = message
 
         if (normalizeSymbol(symbol)) {
-          const change24h = change_percentage !== undefined ? parseFloat(change_percentage) : 0
+          const prev = getLatestPrices()[symbol]
+          const change24h = change_percentage !== undefined
+            ? parseFloat(change_percentage)
+            : prev?.change24h ?? 0
           broadcastPriceUpdate(symbol, parseFloat(price), timestamp || Date.now(), change24h)
         }
       } else if (message.event === 'subscribe-status') {

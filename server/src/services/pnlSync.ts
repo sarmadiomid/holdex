@@ -2,7 +2,7 @@ import cron from 'node-cron'
 import { logger } from '../utils/logger'
 import { User } from '../db/models/User'
 import { calculatePortfolioValue } from './portfolio'
-import { getLatestPrices } from './socket'
+import { getLatestPrices, broadcastPriceUpdate } from './socket'
 import { env } from '../config/env'
 
 const CHUNK_SIZE = 50
@@ -16,7 +16,7 @@ const SYMBOL_MAP: Record<string, string> = {
 async function fetchPricesFromAPI(): Promise<Record<string, number> | null> {
   try {
     const symbols = Object.keys(SYMBOL_MAP)
-    const url = `https://api.twelvedata.com/price?symbol=${symbols.join(',')}&apikey=${env.TWELVE_DATA_API_KEY}`
+    const url = `https://api.twelvedata.com/quote?symbol=${symbols.join(',')}&apikey=${env.TWELVE_DATA_API_KEY}`
     const response = await fetch(url)
     const data = (await response.json()) as Record<string, any>
 
@@ -24,14 +24,19 @@ async function fetchPricesFromAPI(): Promise<Record<string, number> | null> {
     for (const symbol of symbols) {
       const asset = SYMBOL_MAP[symbol]
       const entry = data[symbol]
-      if (entry?.price) {
-        prices[asset] = parseFloat(entry.price)
-      } else if (entry?.status === 'ok' && typeof entry.price === 'string') {
+      if (entry?.price !== undefined) {
         prices[asset] = parseFloat(entry.price)
       }
     }
 
     if (prices.BTC && prices.GOLD && prices.EUR) {
+      // Also seed latestPrices with 24h change data
+      for (const symbol of symbols) {
+        const entry = data[symbol]
+        if (entry?.percent_change !== undefined) {
+          broadcastPriceUpdate(symbol, parseFloat(entry.price), Date.now(), parseFloat(entry.percent_change))
+        }
+      }
       return prices
     }
     return null
