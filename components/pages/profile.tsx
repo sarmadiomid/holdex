@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { X, User, Wallet, TrendingUp, Trophy, Users, Copy, Check, LogOut, Settings } from 'lucide-react'
+import { X, User, Wallet, TrendingUp, Trophy, Users, Copy, Check, LogOut, Settings, FileText, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/ui/glass-card'
 import { NeonText } from '@/components/ui/neon-text'
@@ -289,6 +289,30 @@ export function Profile({ onClose }: ProfileProps) {
             transition={{ delay: 0.3 }}
             className="space-y-3 pb-6"
           >
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => {
+                haptic.impact('light')
+                onClose()
+                window.location.href = '/policy'
+              }}
+            >
+              <FileText className="size-4 mr-2" />
+              Privacy & Terms
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => {
+                haptic.impact('light')
+                onClose()
+                window.location.href = '/security'
+              }}
+            >
+              <Shield className="size-4 mr-2" />
+              Security Policy
+            </Button>
             <Button
               variant="outline"
               className="w-full justify-start"
