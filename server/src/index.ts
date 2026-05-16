@@ -10,6 +10,7 @@ import { connectDB } from './db/connect'
 import { setupSocketIO, getIo, broadcastAllPrices } from './services/socket'
 import { startTwelveData } from './services/twelveData'
 import { startLeaderboardCron } from './services/leaderboard'
+import { startHourlyPnlSync } from './services/pnlSync'
 import { setupTelegramWebhook, getWebhookInfo } from './services/telegram'
 import authRoutes from './routes/auth'
 import allocationRoutes from './routes/allocation'
@@ -296,6 +297,7 @@ async function bootstrap() {
 
   startTwelveData()
   startLeaderboardCron()
+  startHourlyPnlSync()
 
   setInterval(() => {
     broadcastAllPrices()
