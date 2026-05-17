@@ -98,7 +98,7 @@ export function Allocate() {
       >
         <h1 className="text-2xl font-bold text-foreground mb-1">Allocate Portfolio</h1>
         <p className="text-sm text-muted-foreground">
-          Distribute your {user.balance.toLocaleString()} HLX across assets
+          Distribute your {user.balance.toLocaleString()} ZLR across assets
         </p>
       </motion.div>
 

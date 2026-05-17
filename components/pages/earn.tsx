@@ -59,7 +59,7 @@ export function EarnPage() {
   }
 
   const handleForwardToTelegram = () => {
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Join Zollar and start earning HLX tokens!')}`
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Join Zollar and start earning ZLR tokens!')}`
     if (webApp) {
       webApp.openTelegramLink(shareUrl)
     } else {
@@ -130,11 +130,11 @@ export function EarnPage() {
         <div className="flex items-center justify-center gap-2">
           <Gift className="size-8 text-neon-gold" />
           <NeonText glow="gold" className="text-3xl font-bold">
-            Earn Free HLX
+            Earn Free ZLR
           </NeonText>
         </div>
         <p className="text-muted-foreground text-sm">
-          Complete tasks to earn HLX tokens
+          Complete tasks to earn ZLR tokens
         </p>
       </motion.div>
 
@@ -151,7 +151,7 @@ export function EarnPage() {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-neon-gold">{totalRewards.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">Earned HLX</p>
+              <p className="text-xs text-muted-foreground mt-1">Earned ZLR</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-neon-pink">{availableRewards.toLocaleString()}</p>
@@ -297,7 +297,7 @@ export function EarnPage() {
             All Tasks Completed!
           </NeonText>
           <p className="text-muted-foreground text-sm">
-            You've earned {totalRewards.toLocaleString()} HLX tokens
+            You've earned {totalRewards.toLocaleString()} ZLR tokens
           </p>
         </motion.div>
       )}

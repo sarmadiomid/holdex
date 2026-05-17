@@ -29,7 +29,7 @@ const TOUR_STEPS: TourStep[] = [
     id: 'portfolio',
     targetSelector: '[data-tour="portfolio"]',
     title: 'Your Portfolio Value',
-    description: 'Track your total HLX balance here. Allocations grow or shrink based on real market prices.',
+    description: 'Track your total ZLR balance here. Allocations grow or shrink based on real market prices.',
     icon: <Wallet className="size-5" />,
     position: 'bottom'
   },
@@ -37,7 +37,7 @@ const TOUR_STEPS: TourStep[] = [
     id: 'allocate',
     targetSelector: '[data-tour="nav-allocate"]',
     title: 'Allocate Your Portfolio',
-    description: 'Distribute your HLX across Bitcoin, Gold, and EUR/USD. Your gains are amplified by leverage!',
+    description: 'Distribute your ZLR across Bitcoin, Gold, and EUR/USD. Your gains are amplified by leverage!',
     icon: <PieChart className="size-5" />,
     position: 'top',
     highlightNav: 'allocate'
@@ -45,8 +45,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'earn',
     targetSelector: '[data-tour="nav-earn"]',
-    title: 'Earn Free HLX',
-    description: 'Complete social tasks to earn extra HLX. Follow, share, and invite friends to boost your balance.',
+    title: 'Earn Free ZLR',
+    description: 'Complete social tasks to earn extra ZLR. Follow, share, and invite friends to boost your balance.',
     icon: <Coins className="size-5" />,
     position: 'top',
     highlightNav: 'earn'

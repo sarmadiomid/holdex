@@ -210,8 +210,8 @@ Zollar is a feature-complete Telegram Mini App for gamified portfolio trading wi
 ### 10. 📈 Marketing & Growth Readiness
 
 **✅ Present:**
-- Referral system with rewards (10 HLX per referral)
-- Invite-5 friends task with 2500 HLX bonus
+- Referral system with rewards (10 ZLR per referral)
+- Invite-5 friends task with 2500 ZLR bonus
 - Telegram share links with deep linking
 - Social tasks (Twitter follow, Telegram channel, Instagram follow)
 - Store with Telegram Stars monetization

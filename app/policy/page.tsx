@@ -65,7 +65,7 @@ const sections = [
       },
       {
         sub: 'Simulated Environment',
-        body: 'Zollar is a gamified investment simulation platform. All assets (BTC, Gold, EUR/USD) are simulated using volatility multipliers for entertainment purposes. HLX tokens have no real-world value, cannot be exchanged for real currency or cryptocurrency, and do not represent actual ownership of any financial instrument. The platform uses real market data from TwelveData for price reference only.',
+        body: 'Zollar is a gamified investment simulation platform. All assets (BTC, Gold, EUR/USD) are simulated using volatility multipliers for entertainment purposes. ZLR tokens have no real-world value, cannot be exchanged for real currency or cryptocurrency, and do not represent actual ownership of any financial instrument. The platform uses real market data from TwelveData for price reference only.',
       },
       {
         sub: 'No Real Financial Advice',
@@ -81,7 +81,7 @@ const sections = [
       },
       {
         sub: 'Wallet Cap',
-        body: 'Your HLX balance is capped at a maximum of 1,000 HLX. Any purchases, rewards, or earnings that would exceed this cap will be blocked. This cap ensures fair competition across all participants.',
+        body: 'Your ZLR balance is capped at a maximum of 1,000 ZLR. Any purchases, rewards, or earnings that would exceed this cap will be blocked. This cap ensures fair competition across all participants.',
       },
       {
         sub: 'Telegram Stars Purchases',
@@ -89,7 +89,7 @@ const sections = [
       },
       {
         sub: 'Referral Program',
-        body: 'Referral rewards (10 HLX per referred user) and invite task bonuses (2,500 HLX for referring 5 users) are subject to abuse detection. We reserve the right to withhold rewards if fraudulent activity is detected.',
+        body: 'Referral rewards (10 ZLR per referred user) and invite task bonuses (2,500 ZLR for referring 5 users) are subject to abuse detection. We reserve the right to withhold rewards if fraudulent activity is detected.',
       },
       {
         sub: 'Limitation of Liability',

@@ -119,7 +119,7 @@ export function AllocationSlider({ asset, maxAvailable }: AllocationSliderProps)
             {currentAllocation}%
           </p>
           <p className="text-xs text-muted-foreground">
-            {allocatedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })} HLX
+            {allocatedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })} ZLR
           </p>
         </div>
       </div>

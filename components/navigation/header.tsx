@@ -41,7 +41,7 @@ export function Header({ onProfileClick }: HeaderProps) {
             <span className="text-sm font-mono font-medium text-foreground">
               {user.portfolioValue.toLocaleString()}
             </span>
-            <span className="text-xs text-neon-cyan font-medium">HLX</span>
+            <span className="text-xs text-neon-cyan font-medium">ZLR</span>
           </div>
           
           <motion.button

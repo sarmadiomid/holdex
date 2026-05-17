@@ -8,13 +8,13 @@ import { GlassCard } from '@/components/ui/glass-card'
 import { NeonText } from '@/components/ui/neon-text'
 import { useAppStore } from '@/lib/store'
 import { useTelegram } from '@/hooks/use-telegram'
-const MAX_HLX_BALANCE = 1000
+const MAX_ZLR_BALANCE = 1000
 
 const storeItems = [
-  { id: 'hlx_50', name: '50 HLX', description: 'Micro pack for quick starts', starsPrice: 10, type: 'hlx', value: 50 },
-  { id: 'hlx_100', name: '100 HLX', description: 'Starter pack for new investors', starsPrice: 20, type: 'hlx', value: 100 },
-  { id: 'hlx_250', name: '250 HLX', description: 'Popular choice for active traders', starsPrice: 40, type: 'hlx', value: 250 },
-  { id: 'hlx_500', name: '500 HLX', description: 'Maximum package size', starsPrice: 70, type: 'hlx', value: 500 },
+  { id: 'zlr_50', name: '50 ZLR', description: 'Micro pack for quick starts', starsPrice: 10, type: 'zlr', value: 50 },
+  { id: 'zlr_100', name: '100 ZLR', description: 'Starter pack for new investors', starsPrice: 20, type: 'zlr', value: 100 },
+  { id: 'zlr_250', name: '250 ZLR', description: 'Popular choice for active traders', starsPrice: 40, type: 'zlr', value: 250 },
+  { id: 'zlr_500', name: '500 ZLR', description: 'Maximum package size', starsPrice: 70, type: 'zlr', value: 500 },
   { id: 'lev_2x', name: '2x Leverage', description: 'Double your gains (and losses)', starsPrice: 250, type: 'leverage', value: 2 },
   { id: 'lev_5x', name: '5x Leverage', description: 'High risk, high reward', starsPrice: 1, type: 'leverage', value: 5 },
   { id: 'lev_10x', name: '10x Leverage', description: 'Maximum power mode', starsPrice: 1000, type: 'leverage', value: 10 },
@@ -35,15 +35,15 @@ export function StorePage() {
   const [successId, setSuccessId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const hlxItems = storeItems.filter(item => item.type === 'hlx')
+  const zlrItems = storeItems.filter(item => item.type === 'zlr')
   const leverageItems = storeItems.filter(item => item.type === 'leverage')
 
   const handlePurchase = async (item: typeof storeItems[0]) => {
     if (purchasingId || !token) return
 
     // Frontend cap check before attempting purchase
-    if (item.type === 'hlx' && item.value && user.balance + item.value > MAX_HLX_BALANCE) {
-      setError(`Cannot purchase. This package would exceed your maximum allowed balance of ${MAX_HLX_BALANCE.toLocaleString()} HLX.`)
+    if (item.type === 'zlr' && item.value && user.balance + item.value > MAX_ZLR_BALANCE) {
+      setError(`Cannot purchase. This package would exceed your maximum allowed balance of ${MAX_ZLR_BALANCE.toLocaleString()} ZLR.`)
       haptic.notification('warning')
       return
     }
@@ -89,7 +89,7 @@ export function StorePage() {
           haptic.notification('success')
           
           // Optimistically update UI (will be confirmed by webhook)
-          if (item.type === 'hlx' && item.value) {
+          if (item.type === 'zlr' && item.value) {
             addBalance(item.value)
             if (user) {
               setUser({
@@ -123,7 +123,7 @@ export function StorePage() {
       } else {
         // Non-Telegram fallback (for testing in browser)
         haptic.notification('success')
-        if (item.type === 'hlx' && item.value) {
+        if (item.type === 'zlr' && item.value) {
           addBalance(item.value)
         } else if (item.type === 'leverage' && item.value) {
           setLeverage(item.value)
@@ -174,7 +174,7 @@ export function StorePage() {
                 <Coins className="size-5 text-neon-cyan" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Your HLX Balance</p>
+                <p className="text-xs text-muted-foreground">Your ZLR Balance</p>
                 <NeonText glow="cyan" className="text-2xl font-bold font-mono">
                   {user.balance.toLocaleString()}
                 </NeonText>
@@ -182,13 +182,13 @@ export function StorePage() {
             </div>
             <div className="text-right">
               <p className="text-[10px] text-muted-foreground">Max Wallet</p>
-              <p className="text-sm font-bold text-neon-cyan font-mono">{MAX_HLX_BALANCE.toLocaleString()} HLX</p>
+              <p className="text-sm font-bold text-neon-cyan font-mono">{MAX_ZLR_BALANCE.toLocaleString()} ZLR</p>
             </div>
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-neon-cyan to-blue-500 transition-all duration-500"
-              style={{ width: `${Math.min(100, (user.balance / MAX_HLX_BALANCE) * 100)}%` }}
+              style={{ width: `${Math.min(100, (user.balance / MAX_ZLR_BALANCE) * 100)}%` }}
             />
           </div>
           {user.leverage > 1 && (
@@ -214,15 +214,15 @@ export function StorePage() {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="size-4 text-neon-cyan" />
-          <h2 className="text-base font-semibold text-foreground">HLX Packages</h2>
+          <h2 className="text-base font-semibold text-foreground">ZLR Packages</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {hlxItems.map((item, index) => {
+          {zlrItems.map((item, index) => {
             const isPurchasing = purchasingId === item.id
             const isSuccess = successId === item.id
-            const isBestValue = index === hlxItems.length - 1
-            const isOverCap = item.value ? user.balance + item.value > MAX_HLX_BALANCE : false
+            const isBestValue = index === zlrItems.length - 1
+            const isOverCap = item.value ? user.balance + item.value > MAX_ZLR_BALANCE : false
 
             return (
               <motion.div
@@ -259,7 +259,7 @@ export function StorePage() {
                           ? 'bg-muted/20 text-muted-foreground border border-border/30 cursor-not-allowed'
                           : 'bg-neon-cyan/20 hover:bg-neon-cyan/30 text-neon-cyan border border-neon-cyan/40'
                     )}
-                    title={isOverCap ? `Your wallet cannot exceed ${MAX_HLX_BALANCE.toLocaleString()} HLX` : undefined}
+                    title={isOverCap ? `Your wallet cannot exceed ${MAX_ZLR_BALANCE.toLocaleString()} ZLR` : undefined}
                   >
                     <AnimatePresence mode="wait">
                       {isOverCap ? (

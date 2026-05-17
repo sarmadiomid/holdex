@@ -88,7 +88,7 @@ router.post(
         userId: user._id,
         type: 'reward',
         amount: reward,
-        hlxValue: reward,
+        zlrValue: reward,
       })
 
       logger.info(`Task ${taskId} completed by user ${telegramId}, reward: ${reward}`)

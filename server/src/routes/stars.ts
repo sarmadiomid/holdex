@@ -9,13 +9,13 @@ import { createStarsInvoiceLink } from '../services/telegram'
 
 const router = Router()
 
-export const MAX_HLX_BALANCE = 1000
+export const MAX_ZLR_BALANCE = 1000
 
-export const STARS_PACKAGES: Record<string, { hlx?: number; leverage?: number; starsPrice: number }> = {
-  'hlx_50': { hlx: 50, starsPrice: 10 },
-  'hlx_100': { hlx: 100, starsPrice: 20 },
-  'hlx_250': { hlx: 250, starsPrice: 40 },
-  'hlx_500': { hlx: 500, starsPrice: 70 },
+export const STARS_PACKAGES: Record<string, { zlr?: number; leverage?: number; starsPrice: number }> = {
+  'zlr_50': { zlr: 50, starsPrice: 10 },
+  'zlr_100': { zlr: 100, starsPrice: 20 },
+  'zlr_250': { zlr: 250, starsPrice: 40 },
+  'zlr_500': { zlr: 500, starsPrice: 70 },
   'lev_2x': { leverage: 2, starsPrice: 250 },
   'lev_5x': { leverage: 5, starsPrice: 1 },
   'lev_10x': { leverage: 10, starsPrice: 1000 },
@@ -40,25 +40,25 @@ router.post(
       }
 
       // Check balance cap before creating invoice
-      if (pkg.hlx) {
+      if (pkg.zlr) {
         const user = await User.findOne({ telegramId })
         if (!user) {
           return res.status(404).json({ error: 'User not found' })
         }
-        if (user.balance + pkg.hlx > MAX_HLX_BALANCE) {
+        if (user.balance + pkg.zlr > MAX_ZLR_BALANCE) {
           return res.status(400).json({
-            error: `Cannot purchase. This package would exceed your maximum allowed balance of ${MAX_HLX_BALANCE.toLocaleString()} HLX.`,
+            error: `Cannot purchase. This package would exceed your maximum allowed balance of ${MAX_ZLR_BALANCE.toLocaleString()} ZLR.`,
           })
         }
       }
 
       // Create human-readable title and description
-      const title = pkg.hlx
-        ? `${pkg.hlx.toLocaleString()} HLX Tokens`
+      const title = pkg.zlr
+        ? `${pkg.zlr.toLocaleString()} ZLR Tokens`
         : `${pkg.leverage}x Leverage Booster`
       
-      const description = pkg.hlx
-        ? `Purchase ${pkg.hlx.toLocaleString()} HLX tokens for Zollar trading`
+      const description = pkg.zlr
+        ? `Purchase ${pkg.zlr.toLocaleString()} ZLR tokens for Zollar trading`
         : `Unlock ${pkg.leverage}x leverage for your trades`
 
       // Create real Telegram Stars invoice link
@@ -80,7 +80,7 @@ router.post(
         package: {
           id: packageId,
           starsPrice: pkg.starsPrice,
-          hlx: pkg.hlx,
+          zlr: pkg.zlr,
           leverage: pkg.leverage,
         },
       })

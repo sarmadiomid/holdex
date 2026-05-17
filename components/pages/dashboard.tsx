@@ -180,7 +180,7 @@ export function Dashboard() {
                   Are you sure you want to sell all holdings?
                 </p>
                 <p className="text-xs text-muted-foreground text-center">
-                  Your portfolio of {user.portfolioValue.toFixed(2)} HLX will be returned to your wallet.
+                  Your portfolio of {user.portfolioValue.toFixed(2)} ZLR will be returned to your wallet.
                 </p>
                 {sellError && (
                   <p className="text-xs text-neon-pink text-center">{sellError}</p>
@@ -328,18 +328,18 @@ export function Dashboard() {
                     }>
                       {entry.type === 'sell' ? (
                         entry.pnl !== undefined && Math.abs(entry.pnl) > 0.01 ? (
-                          <>{entry.pnl > 0 ? '+' : ''}{entry.pnl.toFixed(2)} HLX</>
+                          <>{entry.pnl > 0 ? '+' : ''}{entry.pnl.toFixed(2)} ZLR</>
                         ) : (
-                          <>-{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
+                          <>-{Number(entry.zlrValue || 0).toFixed(2)} ZLR</>
                         )
                       ) : entry.type === 'allocate' ? (
-                        <>{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
+                        <>{Number(entry.zlrValue || 0).toFixed(2)} ZLR</>
                       ) :                       entry.type === 'store_purchase' ? (
-                        <>-{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
+                        <>-{Number(entry.zlrValue || 0).toFixed(2)} ZLR</>
                       ) : entry.type === 'reward' ? (
-                        <>+{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
+                        <>+{Number(entry.zlrValue || 0).toFixed(2)} ZLR</>
                       ) : (
-                        <>{Number(entry.hlxValue || 0).toFixed(2)} HLX</>
+                        <>{Number(entry.zlrValue || 0).toFixed(2)} ZLR</>
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground font-mono">

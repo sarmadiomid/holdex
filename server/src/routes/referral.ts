@@ -20,7 +20,7 @@ router.get('/stats', authMiddleware, async (req: AuthRequest, res) => {
     }
 
     const referralCount = user.referredUsers.length
-    const totalEarned = referralCount * 10 // 10 HLX per referral
+    const totalEarned = referralCount * 10 // 10 ZLR per referral
     const completedTasks = user.completedTasks || []
     const inviteTaskCompleted = completedTasks.includes(INVITE_TASK_ID)
     const inviteProgress = Math.min(referralCount, INVITE_TASK_REQUIRED)

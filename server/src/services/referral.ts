@@ -60,11 +60,11 @@ export async function processReferral(
           userId: referrer._id,
           type: 'store_purchase',
           amount: 0,
-          hlxValue: INVITE_TASK_REWARD,
+          zlrValue: INVITE_TASK_REWARD,
         })
 
         logger.info(
-          `Invite-5 task completed by user ${referrer.telegramId}, reward: ${INVITE_TASK_REWARD} HLX`,
+          `Invite-5 task completed by user ${referrer.telegramId}, reward: ${INVITE_TASK_REWARD} ZLR`,
         )
       }
 
@@ -79,7 +79,7 @@ export async function processReferral(
         userId: referrer._id,
         type: 'store_purchase',
         amount: 0,
-        hlxValue: REFERRAL_REWARD,
+        zlrValue: REFERRAL_REWARD,
       })
 
       // Create all position records
@@ -90,7 +90,7 @@ export async function processReferral(
       newBalance = referrer.balance
 
       logger.info(
-        `Referral reward: ${REFERRAL_REWARD} HLX to user ${referrer.telegramId} for referring ${newUser.telegramId}`,
+        `Referral reward: ${REFERRAL_REWARD} ZLR to user ${referrer.telegramId} for referring ${newUser.telegramId}`,
       )
     })
   } finally {

@@ -22,7 +22,7 @@ import { generalLimiter } from './middleware/rateLimit'
 import mongoose from 'mongoose'
 import { User } from './db/models/User'
 import { Position } from './db/models/Position'
-import { MAX_HLX_BALANCE, STARS_PACKAGES } from './routes/stars'
+import { MAX_ZLR_BALANCE, STARS_PACKAGES } from './routes/stars'
 
 async function bootstrap() {
   await connectDB()
@@ -247,23 +247,23 @@ async function bootstrap() {
                 throw new Error('User not found in transaction')
               }
 
-              if (pkg.hlx) {
-                if (txUser.balance + pkg.hlx > MAX_HLX_BALANCE) {
-                  throw new Error(`HLX cap exceeded for charge ${telegram_payment_charge_id}`)
+              if (pkg.zlr) {
+                if (txUser.balance + pkg.zlr > MAX_ZLR_BALANCE) {
+                  throw new Error(`ZLR cap exceeded for charge ${telegram_payment_charge_id}`)
                 }
-                txUser.balance += pkg.hlx
-                txUser.portfolioValue += pkg.hlx
+                txUser.balance += pkg.zlr
+                txUser.portfolioValue += pkg.zlr
 
                 await txUser.save({ session })
 
                 await Position.create([{
                   userId: txUser._id,
                   type: 'store_purchase',
-                  amount: pkg.hlx,
-                  hlxValue: pkg.hlx,
+                  amount: pkg.zlr,
+                  zlrValue: pkg.zlr,
                 }], { session })
 
-                logger.info(`User ${telegramId} purchased ${pkg.hlx} HLX for ${pkg.starsPrice} stars`, {
+                logger.info(`User ${telegramId} purchased ${pkg.zlr} ZLR for ${pkg.starsPrice} stars`, {
                   chargeId: telegram_payment_charge_id,
                 })
               }
@@ -277,7 +277,7 @@ async function bootstrap() {
                   type: 'store_purchase',
                   asset: 'BTC',
                   amount: 0,
-                  hlxValue: 0,
+                  zlrValue: 0,
                 }], { session })
 
                 logger.info(`User ${telegramId} purchased ${pkg.leverage}x leverage for ${pkg.starsPrice} stars`, {
@@ -285,7 +285,7 @@ async function bootstrap() {
                 })
               }
 
-              if (!pkg.hlx && !pkg.leverage) {
+              if (!pkg.zlr && !pkg.leverage) {
                 throw new Error(`Unknown package type: ${packageId}`)
               }
             })

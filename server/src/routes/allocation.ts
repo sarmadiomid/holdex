@@ -78,7 +78,7 @@ router.post(
                 type: 'allocate',
                 asset,
                 amount: alloc,
-                hlxValue: allocatedAmount,
+                zlrValue: allocatedAmount,
                 priceAtTime: initialPrices[asset] ?? undefined,
               }], { session })
             }
@@ -195,7 +195,7 @@ router.post('/allocation/sell', authMiddleware, async (req: AuthRequest, res) =>
         type: 'sell' as const,
         asset,
         amount: allocation,
-        hlxValue: Math.round((allocatedAmount + assetPnl) * 100) / 100,
+        zlrValue: Math.round((allocatedAmount + assetPnl) * 100) / 100,
         pnl: Math.round(assetPnl * 100) / 100,
         priceAtTime: currentPrice,
       }
@@ -305,19 +305,19 @@ router.get(
         return res.json({ history: [] })
       }
 
-      // Calculate PnL for each entry - show actual HLX profit/loss
+      // Calculate PnL for each entry - show actual ZLR profit/loss
       const history = positions.map((p, idx) => {
         const entry: any = {
           id: p._id.toString(),
           type: p.type,
           asset: p.asset,
           amount: p.amount,
-          hlxValue: p.hlxValue,
+          zlrValue: p.zlrValue,
           priceAtTime: p.priceAtTime,
           createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt,
         }
         
-        // For sell entries, calculate pnl from hlxValue difference
+        // For sell entries, calculate pnl from zlrValue difference
         if (p.type === 'sell') {
           if (p.pnl !== undefined) {
             entry.pnl = p.pnl
@@ -327,12 +327,12 @@ router.get(
             // Look ahead in the array (older entries)
             for (let i = idx + 1; i < positions.length; i++) {
               if (positions[i].type === 'allocate' && positions[i].asset === p.asset) {
-                originalAlloc = positions[i].hlxValue
+                originalAlloc = positions[i].zlrValue
                 break
               }
             }
             // pnl = received - original allocation
-            entry.pnl = p.hlxValue - originalAlloc
+            entry.pnl = p.zlrValue - originalAlloc
           }
         }
         

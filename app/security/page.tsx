@@ -115,7 +115,7 @@ const policies = [
       },
       {
         label: 'Balance Cap Enforcement',
-        desc: 'A maximum balance of 1,000 HLX is enforced at both the API level (purchase validation) and database level. Any operation that would exceed this cap is rejected, ensuring tournament fairness.',
+        desc: 'A maximum balance of 1,000 ZLR is enforced at both the API level (purchase validation) and database level. Any operation that would exceed this cap is rejected, ensuring tournament fairness.',
       },
       {
         label: 'Leaderboard Integrity',

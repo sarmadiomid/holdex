@@ -47,7 +47,7 @@ export function PortfolioCard() {
               maximumFractionDigits: 2 
             })}
           </NeonText>
-          <span className="text-lg text-muted-foreground ml-2">HLX</span>
+          <span className="text-lg text-muted-foreground ml-2">ZLR</span>
         </motion.div>
 
         {/* PNL - loading text only for numbers */}

@@ -58,9 +58,9 @@ export function Profile({ onClose }: ProfileProps) {
   }
 
   const stats = [
-    { label: 'Balance', value: `${user.balance.toLocaleString()} HLX`, icon: Wallet, color: 'text-neon-cyan' },
-    { label: 'Portfolio', value: `${user.portfolioValue.toLocaleString()} HLX`, icon: TrendingUp, color: 'text-neon-gold' },
-    { label: 'Total P&L', value: `${user.totalPnl >= 0 ? '+' : ''}${user.totalPnl.toLocaleString()} HLX`, icon: TrendingUp, color: user.totalPnl >= 0 ? 'text-neon-green' : 'text-neon-pink' },
+    { label: 'Balance', value: `${user.balance.toLocaleString()} ZLR`, icon: Wallet, color: 'text-neon-cyan' },
+    { label: 'Portfolio', value: `${user.portfolioValue.toLocaleString()} ZLR`, icon: TrendingUp, color: 'text-neon-gold' },
+    { label: 'Total P&L', value: `${user.totalPnl >= 0 ? '+' : ''}${user.totalPnl.toLocaleString()} ZLR`, icon: TrendingUp, color: user.totalPnl >= 0 ? 'text-neon-green' : 'text-neon-pink' },
     { label: 'Leverage', value: `${user.leverage}x`, icon: Settings, color: 'text-neon-pink' },
   ]
 
@@ -170,12 +170,12 @@ export function Profile({ onClose }: ProfileProps) {
                  )}
                </div>
                <p className="text-sm text-muted-foreground mb-2">
-                 Earn <span className="text-neon-gold font-bold">10 HLX</span> for each friend who joins with your link
+                 Earn <span className="text-neon-gold font-bold">10 ZLR</span> for each friend who joins with your link
                </p>
                {referralStats && referralStats.totalEarned > 0 && (
                  <div className="mb-4 px-3 py-2 rounded-lg bg-neon-gold/10 border border-neon-gold/30">
                    <p className="text-sm text-neon-gold font-medium">
-                     Total earned: <span className="font-bold">{referralStats.totalEarned} HLX</span>
+                     Total earned: <span className="font-bold">{referralStats.totalEarned} ZLR</span>
                    </p>
                  </div>
                )}
@@ -209,12 +209,12 @@ export function Profile({ onClose }: ProfileProps) {
                    </div>
                    {!referralStats.inviteTaskCompleted && (
                      <p className="text-xs text-muted-foreground mt-2">
-                       Earn <span className="text-neon-gold font-bold">2500 HLX</span> when completed
+                       Earn <span className="text-neon-gold font-bold">2500 ZLR</span> when completed
                      </p>
                    )}
                    {referralStats.inviteTaskCompleted && (
                      <p className="text-xs text-neon-cyan mt-2 font-medium">
-                       +2500 HLX has been added to your balance
+                       +2500 ZLR has been added to your balance
                      </p>
                    )}
                  </div>
@@ -269,13 +269,13 @@ export function Profile({ onClose }: ProfileProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Portfolio Value</span>
                   <span className="text-sm font-bold font-mono text-neon-cyan">
-                    {user.portfolioValue.toLocaleString()} HLX
+                    {user.portfolioValue.toLocaleString()} ZLR
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Available Balance</span>
                   <span className="text-sm font-bold font-mono text-foreground">
-                    {user.balance.toLocaleString()} HLX
+                    {user.balance.toLocaleString()} ZLR
                   </span>
                 </div>
               </div>

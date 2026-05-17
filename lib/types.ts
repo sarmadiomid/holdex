@@ -20,7 +20,7 @@ export interface User {
   firstName: string
   lastName: string
   photoUrl?: string
-  balance: number // HLX tokens
+  balance: number // ZLR tokens
   portfolioValue: number
   totalPnl: number
   totalPnlPercent: number
@@ -50,8 +50,8 @@ export interface StoreItem {
   name: string
   description: string
   starsPrice: number // Price in Telegram Stars
-  type: 'hlx' | 'leverage'
-  value?: number // amount of HLX or leverage multiplier
+  type: 'zlr' | 'leverage'
+  value?: number // amount of ZLR or leverage multiplier
 }
 
 // Prize Pool
@@ -140,7 +140,7 @@ export interface PositionHistoryEntry {
   type: 'buy' | 'sell' | 'allocate' | 'store_purchase' | 'reward'
   asset?: AssetType
   amount: number
-  hlxValue: number
+  zlrValue: number
   pnl?: number
   priceAtTime?: number
   createdAt: string
@@ -151,7 +151,7 @@ export interface EarnTask {
   id: string
   title: string
   description: string
-  reward: number // HLX tokens
+  reward: number // ZLR tokens
   type: 'follow' | 'watch' | 'visit' | 'share' | 'invite'
   url?: string
   icon: string
