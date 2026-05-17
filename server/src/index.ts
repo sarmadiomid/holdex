@@ -27,6 +27,9 @@ import { MAX_ZLR_BALANCE, STARS_PACKAGES } from './routes/stars'
 async function bootstrap() {
   await connectDB()
 
+  const token = env.TELEGRAM_BOT_TOKEN
+  console.log('[DEBUG] BOT_TOKEN length:', token.length, '| first 4:', token.slice(0, 4), '| last 4:', token.slice(-4))
+
   const app = express()
   const httpServer = http.createServer(app)
 
