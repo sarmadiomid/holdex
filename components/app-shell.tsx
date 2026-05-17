@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
@@ -60,7 +61,7 @@ function LoadingScreen() {
             }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <span className="text-5xl font-bold text-background">H</span>
+            <Image src="/logo.png" alt="Zollar" width={96} height={96} className="object-cover" />
           </motion.div>
           <motion.div
             className="absolute -bottom-1 -right-1 size-6 rounded-full bg-neon-gold flex items-center justify-center"
@@ -192,7 +193,7 @@ export function AppShell() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <span className="text-4xl font-bold text-background">H</span>
+          <Image src="/logo.png" alt="Zollar" width={80} height={80} className="object-cover" />
         </motion.div>
         <p className="text-neon-pink text-sm text-center">{authError}</p>
         <p className="text-muted-foreground text-xs text-center">Please try again later</p>
@@ -208,7 +209,7 @@ export function AppShell() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <span className="text-4xl font-bold text-background">H</span>
+          <Image src="/logo.png" alt="Zollar" width={80} height={80} className="object-cover" />
         </motion.div>
         <p className="text-muted-foreground text-sm text-center">Open this app via Telegram to start playing</p>
       </div>

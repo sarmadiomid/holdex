@@ -23,8 +23,8 @@ export function Header({ onProfileClick }: HeaderProps) {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <div className="size-8 rounded-lg gradient-neon flex items-center justify-center">
-            <span className="text-lg font-bold text-background">H</span>
+          <div className="size-8 rounded-lg gradient-neon flex items-center justify-center overflow-hidden">
+            <Image src="/logo.png" alt="Zollar" width={32} height={32} className="object-cover" />
           </div>
           <NeonText glow="cyan" className="text-xl font-bold tracking-tight">
             ZOLLAR

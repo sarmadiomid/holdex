@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Shield, Lock, Key, Server, FileCheck, Webhook, Users } from 'lucide-react'
 import Link from 'next/link'
@@ -148,8 +149,8 @@ export default function SecurityPage() {
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="size-8 rounded-lg gradient-neon flex items-center justify-center">
-              <span className="text-lg font-bold text-background">H</span>
+            <div className="size-8 rounded-lg gradient-neon flex items-center justify-center overflow-hidden">
+              <Image src="/logo.png" alt="Zollar" width={32} height={32} className="object-cover" />
             </div>
             <NeonText glow="cyan" className="text-xl font-bold tracking-tight">
               SECURITY
