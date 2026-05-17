@@ -58,7 +58,7 @@ router.post(
         : `${pkg.leverage}x Leverage Booster`
       
       const description = pkg.hlx
-        ? `Purchase ${pkg.hlx.toLocaleString()} HLX tokens for Holdex trading`
+        ? `Purchase ${pkg.hlx.toLocaleString()} HLX tokens for Zollar trading`
         : `Unlock ${pkg.leverage}x leverage for your trades`
 
       // Create real Telegram Stars invoice link

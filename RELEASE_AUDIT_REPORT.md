@@ -1,14 +1,14 @@
 # Release Readiness Audit Report
 
 **Generated:** May 12, 2026
-**Project:** Holdex — Telegram Mini App Investment Tournament Simulator
+**Project:** Zollar — Telegram Mini App Investment Tournament Simulator
 **Overall Release Readiness Score:** 52/100
 
 ---
 
 ## Executive Summary
 
-Holdex is a feature-complete Telegram Mini App for gamified portfolio trading with real-time market data, Telegram Stars monetization, referral rewards, and weekly tournaments. The codebase is well-structured with Next.js 16 + Express + MongoDB + Socket.io architecture and a polished cyberpunk UI. However, **the single most critical issue — production credentials committed to version control — makes release in the current state a security catastrophe**. Combined with zero test coverage, stale compiled output with no source, a pricing bug that sells 5x leverage for 1 Star, and no error monitoring, the app needs significant remediation before production release. The core gameplay and Telegram integration are solid, but the security, testing, and infrastructure gaps are too large to ignore.
+Zollar is a feature-complete Telegram Mini App for gamified portfolio trading with real-time market data, Telegram Stars monetization, referral rewards, and weekly tournaments. The codebase is well-structured with Next.js 16 + Express + MongoDB + Socket.io architecture and a polished cyberpunk UI. However, **the single most critical issue — production credentials committed to version control — makes release in the current state a security catastrophe**. Combined with zero test coverage, stale compiled output with no source, a pricing bug that sells 5x leverage for 1 Star, and no error monitoring, the app needs significant remediation before production release. The core gameplay and Telegram integration are solid, but the security, testing, and infrastructure gaps are too large to ignore.
 
 ---
 

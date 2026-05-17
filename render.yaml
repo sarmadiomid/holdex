@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: holdex-backend
+    name: zollar-backend
     env: node
     region: frankfurt
     plan: free

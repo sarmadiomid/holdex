@@ -27,7 +27,7 @@ export function Header({ onProfileClick }: HeaderProps) {
             <span className="text-lg font-bold text-background">H</span>
           </div>
           <NeonText glow="cyan" className="text-xl font-bold tracking-tight">
-            HOLDEX
+            ZOLLAR
           </NeonText>
         </motion.div>
 

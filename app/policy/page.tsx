@@ -17,7 +17,7 @@ const sections = [
     content: [
       {
         sub: 'Information We Collect',
-        body: 'When you access Holdex via Telegram, we collect the following data through Telegram\'s authentication system: your Telegram user ID, username, first name, last name, and profile photo URL. This information is provided to us by Telegram when you authorize the Mini App and is validated using HMAC-SHA256 cryptographic verification to ensure authenticity.',
+        body: 'When you access Zollar via Telegram, we collect the following data through Telegram\'s authentication system: your Telegram user ID, username, first name, last name, and profile photo URL. This information is provided to us by Telegram when you authorize the Mini App and is validated using HMAC-SHA256 cryptographic verification to ensure authenticity.',
       },
       {
         sub: 'Financial Simulation Data',
@@ -41,11 +41,11 @@ const sections = [
       },
       {
         sub: 'Third-Party Services',
-        body: 'Holdex integrates with: (1) Telegram — for authentication, Mini App hosting, and Stars payments, (2) TwelveData — for real-time and historical market price data (BTC/USD, XAU/USD, EUR/USD), (3) MongoDB Atlas — for database hosting, (4) Vercel & Render — for application hosting. Each service has its own privacy policy governing data handling.',
+        body: 'Zollar integrates with: (1) Telegram — for authentication, Mini App hosting, and Stars payments, (2) TwelveData — for real-time and historical market price data (BTC/USD, XAU/USD, EUR/USD), (3) MongoDB Atlas — for database hosting, (4) Vercel & Render — for application hosting. Each service has its own privacy policy governing data handling.',
       },
       {
         sub: 'Your Rights',
-        body: 'You have the right to access, correct, or delete your personal data. Since Holdex operates through Telegram, you can revoke the Mini App\'s access via your Telegram settings at any time.',
+        body: 'You have the right to access, correct, or delete your personal data. Since Zollar operates through Telegram, you can revoke the Mini App\'s access via your Telegram settings at any time.',
       },
     ],
   },
@@ -57,19 +57,19 @@ const sections = [
     content: [
       {
         sub: 'Acceptance of Terms',
-        body: 'By accessing or using Holdex ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Platform.',
+        body: 'By accessing or using Zollar ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Platform.',
       },
       {
         sub: 'Eligibility',
-        body: 'You must be at least 13 years of age (or the age of digital consent in your jurisdiction) to use Holdex. By using the Platform, you represent that you meet this requirement.',
+        body: 'You must be at least 13 years of age (or the age of digital consent in your jurisdiction) to use Zollar. By using the Platform, you represent that you meet this requirement.',
       },
       {
         sub: 'Simulated Environment',
-        body: 'Holdex is a gamified investment simulation platform. All assets (BTC, Gold, EUR/USD) are simulated using volatility multipliers for entertainment purposes. HLX tokens have no real-world value, cannot be exchanged for real currency or cryptocurrency, and do not represent actual ownership of any financial instrument. The platform uses real market data from TwelveData for price reference only.',
+        body: 'Zollar is a gamified investment simulation platform. All assets (BTC, Gold, EUR/USD) are simulated using volatility multipliers for entertainment purposes. HLX tokens have no real-world value, cannot be exchanged for real currency or cryptocurrency, and do not represent actual ownership of any financial instrument. The platform uses real market data from TwelveData for price reference only.',
       },
       {
         sub: 'No Real Financial Advice',
-        body: 'Holdex does not provide financial advice. The simulated trading environment is for entertainment and educational purposes only. Nothing on the Platform constitutes a recommendation to buy, sell, or hold any real-world financial asset.',
+        body: 'Zollar does not provide financial advice. The simulated trading environment is for entertainment and educational purposes only. Nothing on the Platform constitutes a recommendation to buy, sell, or hold any real-world financial asset.',
       },
       {
         sub: 'Tournament Rules',
@@ -93,7 +93,7 @@ const sections = [
       },
       {
         sub: 'Limitation of Liability',
-        body: 'Holdex and its operators are not liable for any damages arising from your use of the Platform, including but not limited to: loss of simulated funds, data loss, service interruptions, or any indirect or consequential damages. The Platform is provided "as is" without warranties of any kind.',
+        body: 'Zollar and its operators are not liable for any damages arising from your use of the Platform, including but not limited to: loss of simulated funds, data loss, service interruptions, or any indirect or consequential damages. The Platform is provided "as is" without warranties of any kind.',
       },
       {
         sub: 'Modifications',
@@ -154,7 +154,7 @@ export default function PolicyPage() {
             Privacy Policy & Terms of Service
           </h1>
           <p className="text-muted-foreground text-sm max-w-lg mx-auto">
-            Last updated: May 2026. Please read these documents carefully before using Holdex.
+            Last updated: May 2026. Please read these documents carefully before using Zollar.
           </p>
         </motion.div>
 

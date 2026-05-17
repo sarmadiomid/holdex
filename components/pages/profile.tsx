@@ -30,7 +30,7 @@ export function Profile({ onClose }: ProfileProps) {
     inviteTaskCompleted: boolean
   } | null>(null)
 
-  const referralLink = `https://t.me/holdextest_bot/holdex?startapp=${user.telegramId}`
+  const referralLink = `https://t.me/zollartest_bot/zollar?startapp=${user.telegramId}`
 
   useEffect(() => {
     const fetchReferralStats = async () => {

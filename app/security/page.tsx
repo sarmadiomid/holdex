@@ -172,7 +172,7 @@ export default function SecurityPage() {
             Security Policy
           </h1>
           <p className="text-muted-foreground text-sm max-w-lg mx-auto">
-            How Holdex protects your data, maintains platform integrity, and handles security.
+            How Zollar protects your data, maintains platform integrity, and handles security.
           </p>
         </motion.div>
 
@@ -188,7 +188,7 @@ export default function SecurityPage() {
               <h2 className="text-lg font-bold text-foreground">Responsible Disclosure</h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              If you discover a security vulnerability in Holdex, please report it responsibly
+              If you discover a security vulnerability in Zollar, please report it responsibly
               through our official Telegram channel. Do not disclose vulnerabilities publicly
               until they have been addressed. We are committed to resolving validated security
               issues promptly and will acknowledge reports within 48 hours.

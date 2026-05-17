@@ -31,7 +31,7 @@ export function EarnPage() {
   const totalRewards = earnTasks.reduce((sum, t) => sum + (t.completed ? t.reward : 0), 0)
   const availableRewards = earnTasks.reduce((sum, t) => sum + (!t.completed ? t.reward : 0), 0)
 
-  const referralLink = `https://t.me/holdextest_bot/holdex?startapp=${user.telegramId}`
+  const referralLink = `https://t.me/zollartest_bot/zollar?startapp=${user.telegramId}`
 
   useEffect(() => {
     if (!token) return
@@ -59,7 +59,7 @@ export function EarnPage() {
   }
 
   const handleForwardToTelegram = () => {
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Join Holdex and start earning HLX tokens!')}`
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Join Zollar and start earning HLX tokens!')}`
     if (webApp) {
       webApp.openTelegramLink(shareUrl)
     } else {

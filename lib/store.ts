@@ -153,24 +153,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   transactions: [],
   positionHistory: [],
   earnTasks: [
-    { id: 'follow-twitter', title: 'Follow us on Twitter', description: 'Follow @HoldexApp on Twitter for updates', reward: 500, type: 'follow', url: 'https://twitter.com/HoldexApp', icon: '𝕏', completed: false },
-    { id: 'follow-telegram', title: 'Join Telegram Channel', description: 'Join our official Telegram channel', reward: 500, type: 'follow', url: 'https://t.me/holdex_channel', icon: '✈️', completed: false },
+    { id: 'follow-twitter', title: 'Follow us on Twitter', description: 'Follow @ZollarApp on Twitter for updates', reward: 500, type: 'follow', url: 'https://twitter.com/ZollarApp', icon: '𝕏', completed: false },
+    { id: 'follow-telegram', title: 'Join Telegram Channel', description: 'Join our official Telegram channel', reward: 500, type: 'follow', url: 'https://t.me/zollar_channel', icon: '✈️', completed: false },
     { id: 'watch-tutorial', title: 'Watch Tutorial Video', description: 'Learn how to maximize your profits', reward: 300, type: 'watch', url: 'https://youtube.com/watch?v=tutorial', icon: '📺', completed: false },
-    { id: 'visit-website', title: 'Visit Our Website', description: 'Check out the full Holdex platform', reward: 200, type: 'visit', url: 'https://holdex.app', icon: '🌐', completed: false },
-    { id: 'share-app', title: 'Share with Friends', description: 'Share Holdex with 3 friends', reward: 1000, type: 'share', icon: '🔗', completed: false },
-    { id: 'invite-5', title: 'Invite 5 Friends', description: 'Invite 5 friends to join Holdex', reward: 2500, type: 'invite', icon: '👥', completed: false },
-    { id: 'follow-instagram', title: 'Follow on Instagram', description: 'Follow @holdex.app on Instagram', reward: 500, type: 'follow', url: 'https://instagram.com/holdex.app', icon: '📸', completed: false },
+    { id: 'visit-website', title: 'Visit Our Website', description: 'Check out the full Zollar platform', reward: 200, type: 'visit', url: 'https://zollar.app', icon: '🌐', completed: false },
+    { id: 'share-app', title: 'Share with Friends', description: 'Share Zollar with 3 friends', reward: 1000, type: 'share', icon: '🔗', completed: false },
+    { id: 'invite-5', title: 'Invite 5 Friends', description: 'Invite 5 friends to join Zollar', reward: 2500, type: 'invite', icon: '👥', completed: false },
+    { id: 'follow-instagram', title: 'Follow on Instagram', description: 'Follow @zollar.app on Instagram', reward: 500, type: 'follow', url: 'https://instagram.com/zollar.app', icon: '📸', completed: false },
     { id: 'watch-demo', title: 'Watch Platform Demo', description: 'Watch our 2-minute platform demo', reward: 300, type: 'watch', url: 'https://youtube.com/watch?v=demo', icon: '🎬', completed: false },
   ],
   activeTab: 'dashboard',
 
-  isTourCompleted: typeof window !== 'undefined' ? localStorage.getItem('holdex_tour_completed') === 'true' : false,
+  isTourCompleted: typeof window !== 'undefined' ? localStorage.getItem('zollar_tour_completed') === 'true' : false,
 
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   setTourCompleted: () => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('holdex_tour_completed', 'true')
+      localStorage.setItem('zollar_tour_completed', 'true')
     }
     set({ isTourCompleted: true })
   },

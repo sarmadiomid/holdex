@@ -26,7 +26,7 @@ const TASK_REWARDS: Record<string, number> = {
 
 // Channel IDs for verification (must add bot as admin to these channels)
 const CHANNEL_VERIFICATION: Record<string, string> = {
-  'follow-telegram': '@holdex_channel', // Replace with your actual channel username or ID
+  'follow-telegram': '@zollar_channel', // Replace with your actual channel username or ID
   // Add more channels as needed
 }
 

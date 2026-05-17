@@ -53,7 +53,7 @@ export default function Page() {
           <a
             target="_blank"
             rel="noopener"
-            href="https://holdex-jl.sentry.io/issues/?project=4511399833567232"
+            href="https://zollar-jl.sentry.io/issues/?project=4511399833567232"
           >
             Issues Page
           </a>

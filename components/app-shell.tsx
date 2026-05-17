@@ -71,7 +71,7 @@ function LoadingScreen() {
           </motion.div>
         </div>
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-foreground tracking-tight">Holdex</h1>
+          <h1 className="text-4xl font-bold text-foreground tracking-tight">Zollar</h1>
           <p className="text-sm text-muted-foreground mt-2">Investment tournament simulator</p>
         </div>
       </motion.div>

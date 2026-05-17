@@ -20,7 +20,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     targetSelector: '[data-tour="header"]',
-    title: 'Welcome to Holdex!',
+    title: 'Welcome to Zollar!',
     description: 'An investment tournament simulator where you compete for real TON prizes. Allocate your portfolio across crypto, gold, and forex.',
     icon: <Sparkles className="size-5" />,
     position: 'bottom'
