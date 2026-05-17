@@ -31,7 +31,7 @@ export function EarnPage() {
   const totalRewards = earnTasks.reduce((sum, t) => sum + (t.completed ? t.reward : 0), 0)
   const availableRewards = earnTasks.reduce((sum, t) => sum + (!t.completed ? t.reward : 0), 0)
 
-  const referralLink = `https://t.me/zollartest_bot/zollar?startapp=${user.telegramId}`
+  const referralLink = `https://t.me/zollar_bot/zollar?startapp=${user.telegramId}`
 
   useEffect(() => {
     if (!token) return
